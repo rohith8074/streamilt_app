@@ -137,6 +137,83 @@ def chat_with_agent_sdk(
         return f"AI Connection Error: {e}. Please try again."
 
 
+# --- SDK TRACES FUNCTION ---
+def get_traces_sdk(
+    agent_id: str = None,
+    user_id: str = None,
+    session_id: str = None,
+    limit: int = 100,
+    offset: int = 0,
+    since_timestamp: str = None
+):
+    """
+    Retrieve traces from Lyzr using SDK's HTTP client.
+
+    Note: The SDK doesn't have a public traces API, so we use the internal HTTP client
+    to call the /v3/traces endpoint directly.
+
+    Args:
+        agent_id: Filter by agent ID (defaults to AGENT_ID env var)
+        user_id: Filter by user ID
+        session_id: Filter by session ID
+        limit: Maximum number of traces to retrieve
+        offset: Number of traces to skip
+        since_timestamp: ISO timestamp to fetch traces after
+
+    Returns:
+        list: List of trace dictionaries
+
+    Raises:
+        None: Returns empty list on errors
+    """
+    agent_id = agent_id or AGENT_ID
+
+    if not agent_id:
+        logger.warning("Cannot fetch traces: Missing AGENT_ID")
+        return []
+
+    try:
+        # Initialize SDK client
+        client = LyzrClient()
+
+        # Build query parameters
+        params = {
+            "limit": limit,
+            "offset": offset
+        }
+
+        if user_id:
+            params["user_id"] = user_id
+        if session_id:
+            params["session_id"] = session_id
+        if since_timestamp:
+            # Optimization: Look slightly before start time to avoid missing data
+            try:
+                from datetime import datetime, timedelta
+                dt = datetime.fromisoformat(since_timestamp.replace("Z", "+00:00"))
+                params["start_time"] = (dt - timedelta(seconds=1)).isoformat()
+            except:
+                params["start_time"] = since_timestamp
+
+        # Call traces endpoint using SDK's HTTP client
+        # Note: Using internal _http client since SDK doesn't expose public traces API
+        response = client.studio._http.get("/v3/traces", params=params)
+
+        # Handle response format (could be dict with 'traces' key or list directly)
+        traces = response.get("traces", []) if isinstance(response, dict) else response
+
+        # Local filter by agent_id (API may not support this param)
+        if agent_id:
+            traces = [t for t in traces if t.get("agent_id") == agent_id or not t.get("agent_id")]
+
+        logger.info(f"Retrieved {len(traces)} traces from SDK")
+        return traces
+
+    except Exception as e:
+        logger.error(f"Failed to fetch traces via SDK: {e}")
+        return []
+
+
 # --- 3. THE 'CHAT' ENGINE ---
 # This function sends your question to the Lyzr chat endpoint and gets an AI response.
 # IMPORTANT: The chat response does NOT include trace data. Traces must be fetched separately

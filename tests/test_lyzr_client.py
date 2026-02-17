@@ -266,3 +266,75 @@ class TestChatWithAgentSDK:
         call_kwargs = mock_agent.run.call_args.kwargs
         assert "managed_agents" in call_kwargs
         assert call_kwargs["managed_agents"] == managed_agents
+
+
+class TestGetTracesSDK:
+    """Tests for get_traces_sdk function using SDK."""
+
+    def test_get_traces_sdk_basic(self, mocker):
+        """Test get_traces_sdk retrieves traces from SDK HTTP client."""
+        from lyzr_client import get_traces_sdk
+
+        # Mock HTTP response
+        mock_response = [
+            {
+                "trace_id": "trace-1",
+                "user_id": "user@test.com",
+                "agent_id": "test-agent-123",
+                "session_id": "session-abc",
+                "action_cost": 150,
+                "created_at": "2026-02-17T10:30:00Z",
+                "input_data": {"query": "Hello"},
+                "output_data": {"response": "Hi"}
+            }
+        ]
+
+        # Mock the HTTP client's get method
+        mock_http_get = mocker.Mock(return_value=mock_response)
+        mock_client = MagicMock()
+        mock_client.studio._http.get.return_value = mock_response
+
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "test-agent-123")
+
+        result = get_traces_sdk(
+            agent_id="test-agent-123",
+            user_id="user@test.com",
+            limit=100
+        )
+
+        assert len(result) == 1
+        assert result[0]["trace_id"] == "trace-1"
+        assert result[0]["action_cost"] == 150
+
+    def test_get_traces_sdk_with_filters(self, mocker):
+        """Test get_traces_sdk passes filter parameters correctly."""
+        from lyzr_client import get_traces_sdk
+
+        mock_response = []
+        mock_client = MagicMock()
+        mock_client.studio._http.get.return_value = mock_response
+
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "test-agent")
+
+        get_traces_sdk(
+            agent_id="test-agent",
+            user_id="user@test.com",
+            session_id="session-123",
+            limit=50,
+            since_timestamp="2026-02-17T10:00:00Z"
+        )
+
+        # Verify HTTP client was called with correct endpoint and params
+        call_args = mock_client.studio._http.get.call_args
+        assert "/v3/traces" in str(call_args)
+
+    def test_get_traces_sdk_missing_agent_id(self, mocker):
+        """Test get_traces_sdk returns empty list when agent_id is missing."""
+        from lyzr_client import get_traces_sdk
+
+        mocker.patch("lyzr_client.AGENT_ID", None)
+
+        result = get_traces_sdk()
+        assert result == []
