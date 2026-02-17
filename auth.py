@@ -2,8 +2,6 @@
 import sqlite3     # The "Filing Cabinet" engine (Our database)
 import bcrypt      # Security tool used to scramble (hash) passwords so they are safe
 import logging     # The app's diary (Logs everything that happens behind the scenes)
-import uuid        # Generates unique, one-of-a-kind ID codes
-import os          # Used to read secret settings from your computer
 from contextlib import contextmanager
 
 # --- 2. LOGGING SETUP ---

@@ -1,7 +1,6 @@
 # --- 1. SETUP AND IMPORTS ---
 # These lines bring in the necessary "tools" (libraries) for the app to run.
 import streamlit as st  # The main framework for building the website interface
-import os               # Used to interact with the computer's operating system (like reading secret keys)
 import uuid             # Generates unique IDs for chat sessions
 from dotenv import load_dotenv  # Loads secret configurations from a hidden file (.env)
 
