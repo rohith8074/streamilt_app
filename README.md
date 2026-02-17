@@ -16,9 +16,10 @@ Whether you're a student, teacher, or curious learner, this app lets you chat wi
 7. [Project Structure (Where Everything Lives)](#-project-structure-where-everything-lives)
 8. [How Credits and Usage Are Tracked](#-how-credits-and-usage-are-tracked)
 9. [Database and Data Storage](#-database-and-data-storage)
-10. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
-11. [Troubleshooting](#-troubleshooting)
-12. [License & Credits](#-license--credits)
+10. [Testing](#-testing)
+11. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
+12. [Troubleshooting](#-troubleshooting)
+13. [License & Credits](#-license--credits)
 
 ---
 
@@ -193,7 +194,9 @@ Streamlit_app/
 ├── prompts.py             # Optional prompt text for the Lyzr agent (used when configuring the agent in Lyzr)
 ├── .env                   # Your secrets (API key, agent IDs) — you create this from .env.example
 ├── .env.example            # Template showing which variables to set
+├── .gitignore             # Files excluded from Git (venv, .env, database, caches)
 ├── requirements.txt       # List of Python packages to install
+├── pytest.ini             # Pytest configuration (test paths, verbosity)
 ├── users.db               # SQLite database (created automatically): users, chats, traces, settings
 ├── utils/
 │   ├── ui.py              # Styling: colors, fonts, glassmorphism CSS, logo
@@ -203,6 +206,12 @@ Streamlit_app/
 │   ├── chat.py            # Chat screen: send messages, show history, call Lyzr, save messages/traces
 │   ├── dashboard.py      # Dashboard: charts, usage table, refresh/sync, admin filter
 │   └── settings.py       # Admin-only: API key, global limit, per-user limits
+├── tests/                 # Automated test suite (pytest)
+│   ├── conftest.py        # Shared fixtures: temp database, sample users, sample traces
+│   ├── test_auth.py       # Tests for auth.py (47 tests: users, sessions, credits, chat, traces, settings)
+│   ├── test_sync.py       # Tests for sync.py (12 tests: credit division, attribution, security, edge cases)
+│   ├── test_lyzr_client.py # Tests for lyzr_client.py (12 tests: API key, chat, traces — all HTTP mocked)
+│   └── test_ui.py         # Tests for ui.py (5 tests: base64 encoding, CSS injection smoke test)
 └── Prompts/               # Optional prompt files for reference (e.g. when configuring your agent in Lyzr)
 ```
 
@@ -260,6 +269,55 @@ The app uses a single **SQLite** file: **`users.db`**. It is created automatical
 - **settings** — Key-value store: e.g. `max_credits` (default limit), `admin_api_key` (Lyzr API key from Settings page).
 
 Passwords are hashed with **bcrypt**; they are never stored in plain text. The database uses WAL (Write-Ahead Logging) for better concurrency. For more detail, see **DATABASE.md**. There is also **MONGODB_MIGRATION.md** for a possible future move to MongoDB.
+
+---
+
+## 🧪 oo
+
+The project includes a comprehensive **pytest** test suite with **77 tests** covering all core modules. Tests run against an isolated temporary database — your real `users.db` is **never** touched.
+
+### How to Run Tests
+
+```bash
+# 1. Make sure you have pytest installed (inside your venv)
+pip install pytest pytest-mock
+
+# 2. Run all tests with verbose output
+./venv/bin/python -m pytest -v
+
+# 3. Run a specific test file
+./venv/bin/python -m pytest tests/test_auth.py -v
+
+# 4. Run a specific test class or function
+./venv/bin/python -m pytest tests/test_auth.py::TestCreditLimits -v
+./venv/bin/python -m pytest tests/test_sync.py::TestCreditDivision::test_action_cost_divided_by_100 -v
+```
+
+### Test Structure
+
+```text
+tests/
+├── conftest.py           # Shared fixtures (auto-creates temp DB for every test)
+├── test_auth.py          # 47 tests — Database, authentication, and business logic
+├── test_sync.py          # 12 tests — Lyzr-to-local sync pipeline
+├── test_lyzr_client.py   # 12 tests — Lyzr API client (all HTTP mocked)
+└── test_ui.py            #  6 tests — UI helpers and CSS smoke test
+```
+
+### What Each File Tests
+
+| Test File | Module Under Test | What It Covers |
+|-----------|------------------|----------------|
+| `test_auth.py` | `auth.py` | User registration & login, duplicate prevention, session management, credit limits (global/custom), chat history (save/load/delete/order), trace bulk saving & retrieval, trace mapping, app settings, fuzzy session matching, database initialization |
+| `test_sync.py` | `utils/sync.py` | Credit division by 100, all three attribution methods (direct/mapping/fuzzy), security skip for other users' traces, edge cases (empty/null API responses, missing fields, duplicates) |
+| `test_lyzr_client.py` | `lyzr_client.py` | API key retrieval, chat request/response (success, missing key, network error), trace fetch (dict & list formats, agent filtering, network error) |
+| `test_ui.py` | `utils/ui.py` | Base64 file encoding, image-to-data-URI conversion, missing file handling, CSS injection smoke test (prevents NameError regressions) |
+
+### Key Design Decisions
+
+- **Database Isolation**: Every test gets its own temporary SQLite database via `conftest.py`. Tests can run in parallel without interference.
+- **No Real API Calls**: All Lyzr API calls in `test_sync.py` and `test_lyzr_client.py` are mocked with `pytest-mock`. Tests run offline and fast (~5 seconds total).
+- **CSS Smoke Test**: The `test_ui.py` suite includes a regression test to ensure the CSS f-string in `inject_custom_css()` has no Python syntax errors (curly brace escaping).
 
 ---
 

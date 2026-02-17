@@ -267,6 +267,26 @@ def inject_custom_css():
             font-size: 0.78rem !important;
         }}
 
+        /* Styling for the Delete (Trash) button in history */
+        div[data-testid="column"] .stButton > button:has(div:contains("🗑️")),
+        div[data-testid="column"] .stButton > button:contains("🗑️") {{
+            border-color: rgba(239, 68, 68, 0.2) !important;
+            color: rgba(239, 68, 68, 0.6) !important;
+            padding: 0.45rem 0 !important;
+            text-align: center !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+
+        div[data-testid="column"] .stButton > button:has(div:contains("🗑️")):hover,
+        div[data-testid="column"] .stButton > button:contains("🗑️"):hover {{
+            background-color: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.8) !important;
+            color: #ef4444 !important;
+            transform: scale(1.05) !important;
+        }}
+
         /* --- INPUT FIELDS (Where you type) --- */
         .stTextInput>div>div>input, .stSelectbox>div>div>div, .stNumberInput>div>div>input {{
             background-color: {INPUT_BG} !important;

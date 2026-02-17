@@ -9,6 +9,9 @@ env/
 # Streamlit
 .streamlit/
 
+# Pytest
+.pytest_cache/
+
 # Databases
 *.db
 *.sqlite3

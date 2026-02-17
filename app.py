@@ -15,7 +15,8 @@ from auth import (
     get_user_credits,           # Checks how much money/credits a person has spent
     get_total_platform_credits, # Total cost spent by everyone on the platform
     get_chat_history,           # Retrieves old messages from the database
-    get_user_limit              # Finds out how much a user is allowed to spend
+    get_user_limit,              # Finds out how much a user is allowed to spend
+    delete_chat_session         # Deletes a specific session
 )
 from lyzr_client import AGENT_ID  # The specific ID of the AI agent we are talking to
 
@@ -127,17 +128,32 @@ if st.session_state.logged_in:
         if not past_sessions:
             st.markdown(f'<div style="color: {SECONDARY_TEXT}; font-size: 0.78rem; text-align: center; padding: 0.35rem 0; font-style: italic;">No past chats yet</div>', unsafe_allow_html=True)
         else:
-            # Show only the 3 most recent chats so sidebar fits without scrolling
-            for session in past_sessions[:3]:
-                # Each session gets a button with a preview of the first message.
-                # If you click it, we load those old messages and switch your session ID.
-                preview_text = session['preview'][:40] + "..." if len(session['preview']) > 40 else session['preview']
-                if st.button(f"📄 {preview_text}", key=f"hist_{session['session_id']}", use_container_width=True):
-                    st.session_state.session_id = session["session_id"]
-                    st.session_state.messages = get_chat_history(st.session_state.username, session["session_id"])
-                    update_user_session(st.session_state.username, session["session_id"])
-                    st.session_state.page = "Chat"
-                    st.rerun()
+            # We use a container with a fixed height to create a scrollable area for history
+            # This ensures even with 50+ chats, the sidebar remains usable.
+            with st.container(height=300):
+                for session in past_sessions:
+                    # Create two columns: one for the chat preview, one for the delete button
+                    cols = st.columns([0.85, 0.15])
+                    
+                    preview_text = session['preview'][:40] + "..." if len(session['preview']) > 40 else session['preview']
+                    
+                    with cols[0]:
+                        if st.button(f"📄 {preview_text}", key=f"hist_{session['session_id']}", use_container_width=True):
+                            st.session_state.session_id = session["session_id"]
+                            st.session_state.messages = get_chat_history(st.session_state.username, session["session_id"])
+                            update_user_session(st.session_state.username, session["session_id"])
+                            st.session_state.page = "Chat"
+                            st.rerun()
+                    
+                    with cols[1]:
+                        if st.button("🗑️", key=f"del_{session['session_id']}", help="Delete this chat"):
+                            if delete_chat_session(st.session_state.username, session["session_id"]):
+                                # If we deleted the CURRENT active session, reset it
+                                if st.session_state.session_id == session["session_id"]:
+                                    st.session_state.session_id = str(uuid.uuid4())
+                                    st.session_state.messages = []
+                                    update_user_session(st.session_state.username, st.session_state.session_id)
+                                st.rerun()
             
         st.divider()
         st.caption("ACTIONS")

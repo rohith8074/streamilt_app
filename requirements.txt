@@ -4,3 +4,5 @@ python-dotenv
 bcrypt
 pandas
 plotly
+pytest
+pytest-mock

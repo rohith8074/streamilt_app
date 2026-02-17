@@ -257,6 +257,19 @@ def get_all_user_sessions(username):
     conn.close()
     return [{"session_id": row[0], "preview": row[1][:30] + "..." if row[1] else "New Chat"} for row in rows]
 
+def delete_chat_session(username, session_id):
+    """Permanently deletes all messages from a specific chat session."""
+    conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
+    try:
+        conn.execute("DELETE FROM chat_messages WHERE username=? AND session_id=?", (username, session_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error deleting session {session_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
 # --- 7. UTILITY FUNCTIONS ---
 # Specialized helpers for various internal tasks.
 
