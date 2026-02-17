@@ -492,3 +492,31 @@ class TestFuzzySession:
 
         # Should return None on error
         assert result is None
+
+
+# ============================================================
+# 10. DATABASE PERFORMANCE INDEXES
+# ============================================================
+
+
+class TestDatabaseIndexes:
+    """Tests for database performance indexes."""
+
+    def test_database_has_performance_indexes(self):
+        """Test that performance indexes are created."""
+        from auth import db_connection
+
+        with db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT name FROM sqlite_master WHERE type='index'")
+            indexes = [row[0] for row in c.fetchall()]
+
+            # Check for our custom indexes (exclude auto-created primary key indexes)
+            expected_indexes = [
+                'idx_chat_messages_user_session',
+                'idx_traces_user_agent',
+                'idx_traces_created_at'
+            ]
+
+            for idx in expected_indexes:
+                assert idx in indexes, f"Missing index: {idx}"

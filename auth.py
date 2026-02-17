@@ -112,6 +112,22 @@ def init_db():
             "UPDATE settings SET value = '' WHERE key = 'admin_api_key' AND (value IS NULL OR value = '' OR trim(value) = '')"
         )
 
+        # Create performance indexes
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chat_messages_user_session
+            ON chat_messages(username, session_id)
+        """)
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS idx_traces_user_agent
+            ON traces(user_id, agent_id)
+        """)
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS idx_traces_created_at
+            ON traces(created_at DESC)
+        """)
+
         conn.commit()
 
 
