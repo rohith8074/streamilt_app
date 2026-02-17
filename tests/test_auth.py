@@ -64,6 +64,17 @@ class TestUserAuth:
         create_user("bob@test.com", "pass")
         assert create_user("bob@test.com", "pass") is False
 
+    def test_create_user_database_error(self, mocker):
+        """Test that create_user handles database errors gracefully."""
+        import sqlite3
+        # Mock sqlite3.connect to raise an error
+        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("Connection failed"))
+
+        result = create_user("test@example.com", "password")
+
+        # Should return False, not crash with unbound variable
+        assert result is False
+
     def test_verify_correct_password(self, sample_user):
         assert verify_user(sample_user["username"], sample_user["password"]) is True
 

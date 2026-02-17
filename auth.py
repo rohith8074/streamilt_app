@@ -158,14 +158,19 @@ def get_all_traces(user_id=None, agent_id=None):
 def create_user(username, password):
     """Registers a new person. We scramble the password immediately for security."""
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    conn = None  # Initialize to None
     try:
         conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
         c = conn.cursor()
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed))
         conn.commit()
         return True
-    except: return False
-    finally: conn.close()
+    except (sqlite3.Error, ValueError, UnicodeDecodeError) as e:
+        logger.error("User creation failed: %s", e)
+        return False
+    finally:
+        if conn:
+            conn.close()
 
 def verify_user(username, password):
     """Checks if the password provided matches the scrambled password in our drawer."""
