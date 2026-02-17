@@ -1,31 +1,37 @@
 # --- 1. SETUP AND IMPORTS ---
 # These lines bring in the necessary "tools" (libraries) for the app to run.
+import uuid  # Generates unique IDs for chat sessions
+
 import streamlit as st  # The main framework for building the website interface
-import uuid             # Generates unique IDs for chat sessions
-from dotenv import load_dotenv  # Loads secret configurations from a hidden file (.env)
+from dotenv import \
+    load_dotenv  # Loads secret configurations from a hidden file (.env)
 
 # --- 2. CONNECTING TO THE "BRAIN" (Auth & Logic) ---
 # We are importing functions we wrote in other files to handle things like users and database work.
-from auth import (
-    init_db,                    # Initializes the database (the app's filing cabinet)
-    create_user,                # Function to register a new person
-    get_user_session,           # Finds a user's previous active chat
-    update_user_session,        # Saves a user's current chat ID
-    get_user_credits,           # Checks how much money/credits a person has spent
-    get_total_platform_credits, # Total cost spent by everyone on the platform
-    get_chat_history,           # Retrieves old messages from the database
-    get_user_limit,              # Finds out how much a user is allowed to spend
-    delete_chat_session         # Deletes a specific session
-)
-from lyzr_client import AGENT_ID  # The specific ID of the AI agent we are talking to
-
+from auth import create_user  # Function to register a new person
+from auth import delete_chat_session  # Deletes a specific session
+from auth import get_chat_history  # Retrieves old messages from the database
+from auth import \
+    get_total_platform_credits  # Total cost spent by everyone on the platform
+from auth import \
+    get_user_credits  # Checks how much money/credits a person has spent
+from auth import \
+    get_user_limit  # Finds out how much a user is allowed to spend
+from auth import get_user_session  # Finds a user's previous active chat
+from auth import init_db  # Initializes the database (the app's filing cabinet)
+from auth import update_user_session  # Saves a user's current chat ID
+from lyzr_client import \
+    AGENT_ID  # The specific ID of the AI agent we are talking to
 # --- 3. CONNECTING TO THE "FACE" (UI & Views) ---
 # These are the different screens and styling of our application.
-from utils.ui import inject_custom_css, get_logo_base64, CARD_BG, BORDER_COLOR, SECONDARY_TEXT, TEXT_COLOR  # Handles the beautiful design and branding
-from views.login import show_login_page             # The screen for Sign In/Sign Up
-from views.chat import show_chat_view               # The main AI chat screen
-from views.dashboard import show_dashboard_view     # The monitoring and charts screen
-from views.settings import show_settings_view       # The admin control panel
+from utils.ui import (  # Handles the beautiful design and branding
+    BORDER_COLOR, CARD_BG, SECONDARY_TEXT, TEXT_COLOR, get_logo_base64,
+    inject_custom_css)
+from views.chat import show_chat_view  # The main AI chat screen
+from views.dashboard import \
+    show_dashboard_view  # The monitoring and charts screen
+from views.login import show_login_page  # The screen for Sign In/Sign Up
+from views.settings import show_settings_view  # The admin control panel
 
 # --- 4. STARTUP SEQUENCE ---
 # This part runs every time the app starts to make sure everything is ready.
@@ -120,7 +126,7 @@ if st.session_state.logged_in:
         st.divider()
         st.caption("RECENT CHATS")
         from auth import get_all_user_sessions
-        
+
         # We fetch all the unique chat sessions this user has started.
         past_sessions = get_all_user_sessions(st.session_state.username)
         

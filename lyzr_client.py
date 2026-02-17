@@ -1,9 +1,11 @@
 # --- 1. SETUP AND CORE CONFIGURATION ---
+import json  # For handling complex data formats
+import os  # Used to read secret keys and system settings
+
 import requests  # The tool that allows our app to talk to other computers over the internet
-import os        # Used to read secret keys and system settings
-import json      # For handling complex data formats
 import streamlit as st
-from dotenv import load_dotenv  # Loads our 'Secret File' (.env) containing API keys
+from dotenv import \
+    load_dotenv  # Loads our 'Secret File' (.env) containing API keys
 
 # Load the secret keys from the .env file immediately
 load_dotenv(override=True)

@@ -1,8 +1,9 @@
 # --- 1. CORE SYSTEM IMPORTS ---
-import sqlite3     # The "Filing Cabinet" engine (Our database)
-import bcrypt      # Security tool used to scramble (hash) passwords so they are safe
-import logging     # The app's diary (Logs everything that happens behind the scenes)
+import logging  # The app's diary (Logs everything that happens behind the scenes)
+import sqlite3  # The "Filing Cabinet" engine (Our database)
 from contextlib import contextmanager
+
+import bcrypt  # Security tool used to scramble (hash) passwords so they are safe
 
 # --- 2. LOGGING SETUP ---
 # This part makes sure that if anything goes wrong, we save a record of it.
@@ -250,6 +251,7 @@ def save_chat_message(username, session_id, role, content):
     conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
     try:
         from datetime import datetime
+
         # 🕒 UTC TIME: We save the message with a UTC timestamp to match Lyzr's cloud clocks.
         now_utc = datetime.utcnow().isoformat()
         conn.execute("INSERT INTO chat_messages (username, session_id, role, content, timestamp) VALUES (?, ?, ?, ?, ?)", 
