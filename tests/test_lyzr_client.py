@@ -138,3 +138,50 @@ class TestLyzrSDKImport:
             assert Agent is not None
         except ImportError:
             pytest.fail("lyzr-adk not installed")
+
+
+class TestLyzrClient:
+    """Tests for LyzrClient wrapper class."""
+
+    def test_lyzr_client_initialization(self, mocker):
+        """Test LyzrClient initializes with API key from parameter."""
+        from lyzr_client import LyzrClient
+
+        # Mock get_active_api_key to return None (so it uses parameter)
+        mocker.patch("lyzr_client.get_active_api_key", return_value=None)
+
+        client = LyzrClient(api_key="test-key-123")
+        assert client.studio is not None
+        assert client.api_key == "test-key-123"
+        assert client.env == "prod"
+
+    def test_lyzr_client_missing_api_key(self, mocker):
+        """Test LyzrClient raises error when API key is missing."""
+        from lyzr_client import LyzrClient
+
+        # Mock both get_active_api_key and LYZR_API_KEY to return None
+        mocker.patch("lyzr_client.get_active_api_key", return_value=None)
+        mocker.patch("lyzr_client.LYZR_API_KEY", None)
+
+        with pytest.raises(ValueError, match="LYZR_API_KEY"):
+            LyzrClient()
+
+    def test_lyzr_client_with_custom_env(self):
+        """Test LyzrClient accepts API key and env as parameters."""
+        from lyzr_client import LyzrClient
+
+        client = LyzrClient(api_key="custom-key", env="dev")
+        assert client.api_key == "custom-key"
+        assert client.env == "dev"
+        assert client.studio is not None
+
+    def test_lyzr_client_from_database(self, mocker):
+        """Test LyzrClient uses get_active_api_key() when no parameter provided."""
+        from lyzr_client import LyzrClient
+
+        # Mock get_active_api_key to return a key from database
+        mocker.patch("lyzr_client.get_active_api_key", return_value="db-key-456")
+
+        client = LyzrClient()
+        assert client.api_key == "db-key-456"
+        assert client.studio is not None

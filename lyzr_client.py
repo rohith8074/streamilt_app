@@ -1,16 +1,54 @@
 # --- 1. SETUP AND CORE CONFIGURATION ---
 import json  # For handling complex data formats
+import logging
 import os  # Used to read secret keys and system settings
 
 import requests  # The tool that allows our app to talk to other computers over the internet
 import streamlit as st
 from dotenv import load_dotenv  # Loads our 'Secret File' (.env) containing API keys
+from lyzr import Studio
 
 # Load the secret keys from the .env file immediately
 load_dotenv(override=True)
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
 # These are the default identities for our AI agent and API connection.
 AGENT_ID = os.getenv("AGENT_ID")
+LYZR_API_KEY = os.getenv("LYZR_API_KEY")
+LYZR_BASE_URL = os.getenv("LYZR_BASE_URL", "https://api.lyzr.app")
+
+
+# --- SDK WRAPPER CLASS ---
+class LyzrClient:
+    """Wrapper class for lyzr-adk SDK Studio."""
+
+    def __init__(self, api_key: str = None, env: str = "prod"):
+        """Initialize Lyzr client with SDK.
+
+        Args:
+            api_key: Lyzr API key (defaults to get_active_api_key() or LYZR_API_KEY env var)
+            env: Environment ('prod' or 'dev', defaults to 'prod')
+
+        Raises:
+            ValueError: If API key is not provided
+        """
+        # Try to get API key from: parameter > get_active_api_key() > env var
+        if api_key:
+            self.api_key = api_key
+        else:
+            # Try database first (for runtime), then env var (for tests)
+            self.api_key = get_active_api_key() or LYZR_API_KEY
+
+        self.env = env
+
+        if not self.api_key:
+            raise ValueError("LYZR_API_KEY environment variable or api_key parameter is required")
+
+        # Initialize Studio with API key and environment
+        self.studio = Studio(api_key=self.api_key, env=self.env)
+        logger.info(f"Initialized Lyzr SDK client with env: {self.env}")
 
 
 # --- 2. DYNAMIC API KEY RETRIEVAL ---
