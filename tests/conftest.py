@@ -2,10 +2,12 @@
 Shared fixtures for all tests.
 Every test automatically gets a fresh, isolated temporary database.
 """
+
 import pytest
 import os
 import sqlite3
 from auth import init_db
+
 
 @pytest.fixture(autouse=True)
 def test_db(monkeypatch, tmp_path):
@@ -15,10 +17,10 @@ def test_db(monkeypatch, tmp_path):
     """
     db_file = tmp_path / "test_users.db"
     monkeypatch.setattr("auth.DB_PATH", str(db_file))
-    
+
     # Initialize the temporary database with all tables
     init_db()
-    
+
     yield str(db_file)
 
 
@@ -26,6 +28,7 @@ def test_db(monkeypatch, tmp_path):
 def sample_user():
     """Creates and returns a standard test user for convenience."""
     from auth import create_user
+
     username = "testuser@example.com"
     password = "SecurePass123"
     create_user(username, password)
@@ -36,6 +39,7 @@ def sample_user():
 def admin_user():
     """Creates an admin user (matches the hardcoded admin in app.py)."""
     from auth import create_user
+
     username = "rohith.p@lyzr.ai"
     password = "Rohith@123"
     create_user(username, password)
@@ -55,7 +59,7 @@ def sample_traces():
             "input": "What is encapsulation?",
             "output": "Encapsulation is...",
             "session_id": "sess_001",
-            "inspect": "https://example.com/trace/001"
+            "inspect": "https://example.com/trace/001",
         },
         {
             "trace_id": "trace_002",
@@ -66,7 +70,7 @@ def sample_traces():
             "input": "What is inheritance?",
             "output": "Inheritance is...",
             "session_id": "sess_001",
-            "inspect": "https://example.com/trace/002"
+            "inspect": "https://example.com/trace/002",
         },
         {
             "trace_id": "trace_003",
@@ -77,6 +81,6 @@ def sample_traces():
             "input": "What is polymorphism?",
             "output": "Polymorphism is...",
             "session_id": "sess_002",
-            "inspect": "https://example.com/trace/003"
+            "inspect": "https://example.com/trace/003",
         },
     ]

@@ -1,15 +1,15 @@
 # --- 1. DESIGN THEME CONSTANTS ---
-# Here we define the "Look and Feel" of the application. 
+# Here we define the "Look and Feel" of the application.
 # Think of these as the paint colors and materials we use for the house.
-BG_COLOR = "#0c0e12"        # Deep charcoal background for the main screen
-SIDEBAR_BG = "#11141a"      # Slightly lighter charcoal for the left menu
-CARD_BG = "#161a21"         # The color of the boxes (cards) that hold information
-TEXT_COLOR = "#e2e8f0"      # Off-white color to make text easy to read in the dark
-METRIC_VALUE = "#ffffff"    # Bright white for important numbers (like money/credits)
-BORDER_COLOR = "rgba(255, 255, 255, 0.08)" # Subtle gray lines for borders
-INPUT_BG = "#161a21"        # Background for text boxes where you type
+BG_COLOR = "#0c0e12"  # Deep charcoal background for the main screen
+SIDEBAR_BG = "#11141a"  # Slightly lighter charcoal for the left menu
+CARD_BG = "#161a21"  # The color of the boxes (cards) that hold information
+TEXT_COLOR = "#e2e8f0"  # Off-white color to make text easy to read in the dark
+METRIC_VALUE = "#ffffff"  # Bright white for important numbers (like money/credits)
+BORDER_COLOR = "rgba(255, 255, 255, 0.08)"  # Subtle gray lines for borders
+INPUT_BG = "#161a21"  # Background for text boxes where you type
 CHART_BG = "rgba(0,0,0,0)"  # Transparent background for graphs
-CHART_GRID = "rgba(255,255,255,0.05)" # Very faint lines inside the graphs
+CHART_GRID = "rgba(255,255,255,0.05)"  # Very faint lines inside the graphs
 SECONDARY_TEXT = "#94a3b8"  # Muted gray for less important labels
 
 # Path to our company logo image
@@ -22,29 +22,34 @@ import os
 # --- 2. IMAGE PROCESSING HELPERS ---
 # These functions translate an image file into a format the website can understand.
 
+
 def get_base64_of_bin_file(bin_file):
     """Converts a standard image file into a long string of characters (Base64)."""
-    with open(bin_file, 'rb') as f:
+    with open(bin_file, "rb") as f:
         data = f.read()
     return base64.b64encode(data).decode()
+
 
 def get_img_with_href(local_img_path):
     """Creates a 'web-ready' version of your local logo image."""
     if not os.path.exists(local_img_path):
         return ""
-    img_format = local_img_path.split('.')[-1]
+    img_format = local_img_path.split(".")[-1]
     bin_str = get_base64_of_bin_file(local_img_path)
-    return f'data:image/{img_format};base64,{bin_str}'
+    return f"data:image/{img_format};base64,{bin_str}"
+
 
 # --- 3. THE MAGIC CSS (Styling Engine) ---
 # This function sends a set of 'design rules' to the browser to make the app look premium.
 # Non-technical explanation: This is like the interior design blueprint for the app.
 
+
 def inject_custom_css():
     """Injects all premium CSS styling into the Streamlit app to create a 'Glassmorphism' look."""
     logo_base64 = get_img_with_href(LOGO_PATH)
-    
-    st.markdown(f"""
+
+    st.markdown(
+        f"""
         <style>
         /* Import the modern 'Outfit' font from Google for a techy, professional look */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
@@ -393,7 +398,10 @@ def inject_custom_css():
             scroll-behavior: smooth;
         }}
         </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
 
 def get_logo_base64():
     """Simple way to get the company logo for reuse in other files."""

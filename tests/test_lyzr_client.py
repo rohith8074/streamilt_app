@@ -6,6 +6,7 @@ Modules tested:
   - chat_with_agent (mocked HTTP)
   - get_traces (mocked HTTP)
 """
+
 import pytest
 from unittest.mock import MagicMock
 from auth import update_app_setting
@@ -77,10 +78,7 @@ class TestGetTraces:
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            "traces": [
-                {"trace_id": "t1", "action_cost": 10},
-                {"trace_id": "t2", "action_cost": 20}
-            ]
+            "traces": [{"trace_id": "t1", "action_cost": 10}, {"trace_id": "t2", "action_cost": 20}]
         }
         mock_response.raise_for_status = MagicMock()
         mocker.patch("lyzr_client.requests.get", return_value=mock_response)
@@ -121,10 +119,7 @@ class TestGetTraces:
         mocker.patch("lyzr_client.get_active_api_key", return_value="sk-key")
 
         mock_response = MagicMock()
-        mock_response.json.return_value = [
-            {"trace_id": "t1"},
-            {"trace_id": "t2"}
-        ]
+        mock_response.json.return_value = [{"trace_id": "t1"}, {"trace_id": "t2"}]
         mock_response.raise_for_status = MagicMock()
         mocker.patch("lyzr_client.requests.get", return_value=mock_response)
 

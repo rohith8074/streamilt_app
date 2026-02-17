@@ -13,25 +13,41 @@ Modules tested:
   - Database Init: init_db
   - Database Connection: db_connection (context manager)
 """
+
 import pytest
 import sqlite3
 from datetime import datetime, timedelta
 from auth import (
     init_db,
-    create_user, verify_user, get_all_users,
-    get_user_session, update_user_session, get_all_user_sessions,
-    get_user_credits, get_user_limit, update_user_limit, get_total_platform_credits,
-    save_chat_message, get_chat_history, delete_chat_session,
-    save_traces_bulk, get_all_traces, save_trace_mapping,
-    get_mapping_for_trace, get_latest_trace_timestamp, clear_user_traces,
-    get_app_settings, update_app_setting,
-    get_fuzzy_session
+    create_user,
+    verify_user,
+    get_all_users,
+    get_user_session,
+    update_user_session,
+    get_all_user_sessions,
+    get_user_credits,
+    get_user_limit,
+    update_user_limit,
+    get_total_platform_credits,
+    save_chat_message,
+    get_chat_history,
+    delete_chat_session,
+    save_traces_bulk,
+    get_all_traces,
+    save_trace_mapping,
+    get_mapping_for_trace,
+    get_latest_trace_timestamp,
+    clear_user_traces,
+    get_app_settings,
+    update_app_setting,
+    get_fuzzy_session,
 )
 
 
 # ============================================================
 # 1. DATABASE CONNECTION CONTEXT MANAGER
 # ============================================================
+
 
 class TestDatabaseConnection:
     """Tests for the db_connection context manager."""
@@ -60,7 +76,7 @@ class TestDatabaseConnection:
             c.execute("SELECT 1")
 
         # Even if we patch connect to fail, context manager should handle it
-        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("Connection failed"))
+        mocker.patch("auth.sqlite3.connect", side_effect=sqlite3.Error("Connection failed"))
 
         try:
             with db_connection() as conn:
@@ -72,6 +88,7 @@ class TestDatabaseConnection:
 # ============================================================
 # 2. DATABASE INITIALIZATION
 # ============================================================
+
 
 class TestInitDb:
     """Verify the database schema is set up correctly."""
@@ -96,6 +113,7 @@ class TestInitDb:
 # 3. USER REGISTRATION & LOGIN
 # ============================================================
 
+
 class TestUserAuth:
     """Tests for user creation and password verification."""
 
@@ -109,8 +127,9 @@ class TestUserAuth:
     def test_create_user_database_error(self, mocker):
         """Test that create_user handles database errors gracefully."""
         import sqlite3
+
         # Mock sqlite3.connect to raise an error
-        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("Connection failed"))
+        mocker.patch("auth.sqlite3.connect", side_effect=sqlite3.Error("Connection failed"))
 
         result = create_user("test@example.com", "password")
 
@@ -138,6 +157,7 @@ class TestUserAuth:
 # 4. SESSION MANAGEMENT
 # ============================================================
 
+
 class TestSessions:
     """Tests for session creation, retrieval, and history."""
 
@@ -160,7 +180,7 @@ class TestSessions:
     def test_get_all_user_sessions_with_chats(self, sample_user):
         save_chat_message(sample_user["username"], "sess_A", "user", "Hello session A")
         save_chat_message(sample_user["username"], "sess_B", "user", "Hello session B")
-        
+
         sessions = get_all_user_sessions(sample_user["username"])
         session_ids = [s["session_id"] for s in sessions]
         assert "sess_A" in session_ids
@@ -171,6 +191,7 @@ class TestSessions:
 # ============================================================
 # 5. CREDIT LIMITS
 # ============================================================
+
 
 class TestCreditLimits:
     """Tests for global and per-user credit limits."""
@@ -193,20 +214,40 @@ class TestCreditLimits:
 
     def test_credits_accumulate_from_traces(self, sample_user):
         traces = [
-            {"trace_id": "t1", "user_id": sample_user["username"], "agent_id": "agent_1",
-             "credits": 0.5, "created_at": "2026-01-01T00:00:00"},
-            {"trace_id": "t2", "user_id": sample_user["username"], "agent_id": "agent_1",
-             "credits": 0.3, "created_at": "2026-01-01T00:01:00"},
+            {
+                "trace_id": "t1",
+                "user_id": sample_user["username"],
+                "agent_id": "agent_1",
+                "credits": 0.5,
+                "created_at": "2026-01-01T00:00:00",
+            },
+            {
+                "trace_id": "t2",
+                "user_id": sample_user["username"],
+                "agent_id": "agent_1",
+                "credits": 0.3,
+                "created_at": "2026-01-01T00:01:00",
+            },
         ]
         save_traces_bulk(traces)
         assert abs(get_user_credits(sample_user["username"]) - 0.8) < 0.001
 
     def test_credits_filter_by_agent(self, sample_user):
         traces = [
-            {"trace_id": "t1", "user_id": sample_user["username"], "agent_id": "agent_A",
-             "credits": 1.0, "created_at": "2026-01-01T00:00:00"},
-            {"trace_id": "t2", "user_id": sample_user["username"], "agent_id": "agent_B",
-             "credits": 2.0, "created_at": "2026-01-01T00:01:00"},
+            {
+                "trace_id": "t1",
+                "user_id": sample_user["username"],
+                "agent_id": "agent_A",
+                "credits": 1.0,
+                "created_at": "2026-01-01T00:00:00",
+            },
+            {
+                "trace_id": "t2",
+                "user_id": sample_user["username"],
+                "agent_id": "agent_B",
+                "credits": 2.0,
+                "created_at": "2026-01-01T00:01:00",
+            },
         ]
         save_traces_bulk(traces)
         assert get_user_credits(sample_user["username"], agent_id="agent_A") == 1.0
@@ -229,13 +270,14 @@ class TestCreditLimits:
 # 6. CHAT HISTORY
 # ============================================================
 
+
 class TestChatHistory:
     """Tests for chat message saving, loading, and deletion."""
 
     def test_save_and_retrieve(self, sample_user):
         save_chat_message(sample_user["username"], "s1", "user", "What is OOP?")
         save_chat_message(sample_user["username"], "s1", "assistant", "OOP stands for...")
-        
+
         history = get_chat_history(sample_user["username"], "s1")
         assert len(history) == 2
         assert history[0]["role"] == "user"
@@ -245,7 +287,7 @@ class TestChatHistory:
     def test_history_filtered_by_session(self, sample_user):
         save_chat_message(sample_user["username"], "s1", "user", "Session 1 msg")
         save_chat_message(sample_user["username"], "s2", "user", "Session 2 msg")
-        
+
         h1 = get_chat_history(sample_user["username"], "s1")
         h2 = get_chat_history(sample_user["username"], "s2")
         assert len(h1) == 1
@@ -256,7 +298,7 @@ class TestChatHistory:
         """Without session_id filter, all messages for the user are returned."""
         save_chat_message(sample_user["username"], "s1", "user", "Msg 1")
         save_chat_message(sample_user["username"], "s2", "user", "Msg 2")
-        
+
         all_history = get_chat_history(sample_user["username"])
         assert len(all_history) == 2
 
@@ -264,7 +306,7 @@ class TestChatHistory:
         save_chat_message(sample_user["username"], "s1", "user", "To be deleted")
         save_chat_message(sample_user["username"], "s1", "assistant", "Also deleted")
         save_chat_message(sample_user["username"], "s2", "user", "Keep this")
-        
+
         result = delete_chat_session(sample_user["username"], "s1")
         assert result is True
         assert len(get_chat_history(sample_user["username"], "s1")) == 0
@@ -279,7 +321,7 @@ class TestChatHistory:
         save_chat_message(sample_user["username"], "s1", "user", "First")
         save_chat_message(sample_user["username"], "s1", "assistant", "Second")
         save_chat_message(sample_user["username"], "s1", "user", "Third")
-        
+
         history = get_chat_history(sample_user["username"], "s1")
         assert [m["content"] for m in history] == ["First", "Second", "Third"]
 
@@ -287,6 +329,7 @@ class TestChatHistory:
 # ============================================================
 # 7. TRACES (Bulk Save, Retrieval, Mapping, Clear)
 # ============================================================
+
 
 class TestTraces:
     """Tests for trace saving, retrieval, mapping, and cleanup."""
@@ -301,11 +344,11 @@ class TestTraces:
     def test_traces_update_on_duplicate(self, sample_traces):
         """Saving the same trace_id again should UPDATE, not duplicate."""
         save_traces_bulk(sample_traces)
-        
+
         updated = [sample_traces[0].copy()]
         updated[0]["credits"] = 0.99
         save_traces_bulk(updated)
-        
+
         traces = get_all_traces(user_id="testuser@example.com")
         trace_001 = [t for t in traces if t["trace_id"] == "trace_001"][0]
         assert trace_001["credits"] == 0.99
@@ -363,7 +406,8 @@ class TestTraces:
     def test_get_mapping_for_trace_handles_database_error(self, mocker):
         """Test that get_mapping_for_trace handles database errors."""
         import sqlite3
-        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("DB error"))
+
+        mocker.patch("auth.sqlite3.connect", side_effect=sqlite3.Error("DB error"))
 
         result = get_mapping_for_trace("test-trace-id")
 
@@ -374,6 +418,7 @@ class TestTraces:
 # ============================================================
 # 8. APP SETTINGS
 # ============================================================
+
 
 class TestSettings:
     """Tests for global app settings (key-value store)."""
@@ -403,6 +448,7 @@ class TestSettings:
 # 9. FUZZY SESSION MATCHING
 # ============================================================
 
+
 class TestFuzzySession:
     """Tests for the time-based fuzzy session detection."""
 
@@ -410,7 +456,7 @@ class TestFuzzySession:
         """A fuzzy entry within 120 seconds should match."""
         time_now = datetime.utcnow().isoformat()
         save_trace_mapping(f"fuzzy_alice_{time_now}", "alice", "sess_match")
-        
+
         result = get_fuzzy_session("alice", time_now)
         assert result == "sess_match"
 
@@ -418,7 +464,7 @@ class TestFuzzySession:
         """A fuzzy entry older than 120 seconds should NOT match."""
         old_time = (datetime.utcnow() - timedelta(minutes=10)).isoformat()
         save_trace_mapping(f"fuzzy_alice_{old_time}", "alice", "sess_old")
-        
+
         check_time = datetime.utcnow().isoformat()
         result = get_fuzzy_session("alice", check_time)
         assert result is None
@@ -427,7 +473,7 @@ class TestFuzzySession:
         """Fuzzy entries for user A should not match user B."""
         time_now = datetime.utcnow().isoformat()
         save_trace_mapping(f"fuzzy_alice_{time_now}", "alice", "sess_alice")
-        
+
         result = get_fuzzy_session("bob", time_now)
         assert result is None
 
@@ -439,7 +485,8 @@ class TestFuzzySession:
     def test_get_fuzzy_session_handles_database_error(self, mocker):
         """Test that get_fuzzy_session handles database errors."""
         import sqlite3
-        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("DB error"))
+
+        mocker.patch("auth.sqlite3.connect", side_effect=sqlite3.Error("DB error"))
 
         result = get_fuzzy_session("test@example.com", "2026-02-17T10:00:00Z")
 

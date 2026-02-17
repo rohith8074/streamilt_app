@@ -6,6 +6,7 @@ Modules tested:
   - get_img_with_href
   - inject_custom_css (smoke test — ensures no syntax errors in the f-string CSS)
 """
+
 import pytest
 import os
 import base64
@@ -54,6 +55,7 @@ class TestInjectCustomCSS:
         mock_markdown = mocker.patch("utils.ui.st.markdown")
 
         from utils.ui import inject_custom_css
+
         # This should NOT raise NameError (like the bug we fixed earlier)
         inject_custom_css()
 
