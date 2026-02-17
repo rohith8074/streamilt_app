@@ -14,12 +14,11 @@ Whether you're a student, teacher, or curious learner, this app lets you chat wi
 5. [What Do You Need to Run It?](#-what-do-you-need-to-run-it)
 6. [Step-by-Step: Getting Started](#-step-by-step-getting-started)
 7. [Project Structure (Where Everything Lives)](#-project-structure-where-everything-lives)
-8. [How Credits and Usage Are Tracked](#-how-credits-and-usage-are-tracked)
-9. [Database and Data Storage](#-database-and-data-storage)
-10. [Testing](#-testing)
-11. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
-12. [Troubleshooting](#-troubleshooting)
-13. [License & Credits](#-license--credits)
+8. [Database and Data Storage](#-database-and-data-storage)
+9. [Testing](#-testing)
+10. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
+11. [Troubleshooting](#-troubleshooting)
+12. [License & Credits](#-license--credits)
 
 ---
 
@@ -220,8 +219,11 @@ Streamlit_app/
 - **lyzr_client.py** — Sends your message to Lyzr chat endpoint and gets the AI reply; also fetches "traces" (usage receipts) from the separate Lyzr traces endpoint.
 - **utils/sync.py** — Takes traces from Lyzr, figures out which user each trace belongs to, converts cost to credits, and saves them into `users.db` so the dashboard and credit meter are correct.
 
+<<<<<<< HEAD
 
 ---
+=======
+>>>>>>> a83a7bf (updated Readme)
 
 ## 🗄️ Database and Data Storage
 
@@ -237,7 +239,7 @@ Passwords are hashed with **bcrypt**; they are never stored in plain text. The d
 
 ---
 
-## 🧪 oo
+## 🧪 Testing
 
 The project includes a comprehensive **pytest** test suite with **77 tests** covering all core modules. Tests run against an isolated temporary database — your real `users.db` is **never** touched.
 
