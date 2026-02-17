@@ -6,6 +6,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Lyzr AI Assistant** — A Streamlit-based educational chatbot platform for teaching Object-Oriented Programming (OOP) concepts using a single Lyzr AI agent. Features user authentication, credit limits, usage tracking, and admin controls.
 
+## Lyzr SDK Integration
+
+**Current Implementation:**
+- Uses official **lyzr-adk** SDK (version 0.1.5)
+- `lyzr_client.py` provides SDK wrapper functionality
+- Functions: `chat_with_agent()`, `get_traces()`
+- Built on `Studio` class and `Agent.run()` method
+
+**Key SDK Patterns:**
+
+```python
+# Initialize client (uses get_active_api_key() → database or env var)
+from lyzr_client import LyzrClient
+client = LyzrClient()  # Env: 'prod' (default) or 'dev'
+
+# Chat with agent (SDK-based)
+from lyzr_client import chat_with_agent
+response = chat_with_agent(
+    message="User question",
+    user_id="user@example.com",
+    session_id="uuid-string",
+    managed_agents=[...]  # Optional for routing
+)
+
+# Fetch traces (SDK-based, uses internal HTTP client)
+from lyzr_client import get_traces
+traces = get_traces(
+    agent_id="agent-id",
+    user_id="user@example.com",
+    limit=100,
+    start_time="2026-02-17T10:00:00Z"
+)
+```
+
+**Environment Variables:**
+- `LYZR_API_KEY` - Lyzr API key (optional, admin sets via Settings UI)
+- `AGENT_ID` - Main manager agent ID (required)
+- `ENCAPSULATION_AGENT_ID` - Specialist agent (optional)
+- `INHERITANCE_AGENT_ID` - Specialist agent (optional)
+- `POLYMORPHISM_AGENT_ID` - Specialist agent (optional)
+- `ABSTRACTION_AGENT_ID` - Specialist agent (optional)
+
+**SDK Limitations & Workarounds:**
+- **No public traces API**: Uses SDK's internal `_http.get("/v3/traces")` client
+- **Response format**: SDK responses converted to dict format for backward compatibility
+- **Future features**: Streaming (`run_stream()`), memory, knowledge bases, RAI guardrails
+
 ## Quick Start
 
 ### Running the App
@@ -30,7 +77,7 @@ streamlit run app.py
 ### Running Tests
 
 ```bash
-# Run all tests (77 tests total)
+# Run all tests (86 tests total)
 python -m pytest -v
 
 # Run specific test file
@@ -58,7 +105,7 @@ python -m pytest tests/test_sync.py::TestCreditDivision::test_action_cost_divide
 |--------|---------------|
 | **app.py** | Entry point, navigation, sidebar (chat history, new chat, metrics, logout) |
 | **auth.py** | All database operations: users, sessions, chat history, traces, settings (SQLite + bcrypt) |
-| **lyzr_client.py** | API client for Lyzr: `chat_with_agent()`, `get_traces()` |
+| **lyzr_client.py** | SDK client for Lyzr: `LyzrClient`, `chat_with_agent()`, `get_traces()` (SDK-based) |
 | **utils/sync.py** | Syncs cloud traces → local DB with three-way attribution (direct/mapping/fuzzy) |
 | **utils/ui.py** | Custom CSS (dark theme, glassmorphism), logo base64 encoding |
 | **views/login.py** | Login/registration UI |

@@ -587,3 +587,72 @@ The codebase is well-structured with good test coverage. The main areas for impr
 - **Code Quality**: Fix formatting, improve error handling consistency
 
 **Estimated effort**: ~2-3 days to address critical and medium priority issues.
+
+---
+
+## Lyzr SDK Migration (2026-02-17)
+
+**Status:** ✅ Complete
+
+**Summary:** Successfully migrated from direct HTTP API calls to the official lyzr-adk SDK (version 0.1.5).
+
+### Changes Implemented
+
+**Dependencies:**
+- Added `lyzr-adk>=0.1.5,<1.0.0` to requirements.txt
+- SDK provides `Studio` class and `Agent.run()` for chat operations
+- Import path: `from lyzr import Studio, Agent`
+
+**Code Changes:**
+- Created `LyzrClient` wrapper class for SDK initialization
+- Migrated `chat_with_agent()` to use `agent.run()` method
+- Migrated `get_traces()` to use SDK's internal HTTP client (workaround for missing public API)
+- Updated `views/chat.py` to use SDK-based chat function
+- Updated `utils/sync.py` to use SDK-based trace retrieval
+- Removed legacy requests-based functions
+
+**Test Updates:**
+- Updated all test mocks to reference SDK functions
+- Added SDK-specific test classes
+- All 86 tests passing (previously 77)
+- Maintained 97%+ code coverage
+
+**Documentation:**
+- Updated CLAUDE.md with SDK usage patterns
+- Updated .env.example with SDK configuration
+- Documented SDK limitations and workarounds
+
+### Benefits
+
+- **Official SDK support** with built-in error handling
+- **Better maintainability** as SDK evolves
+- **Future-ready** for streaming, memory, knowledge bases, RAI guardrails
+- **Reduced maintenance burden** compared to direct API calls
+
+### SDK Limitations & Workarounds
+
+1. **No public traces API**: Used SDK's internal `_http.get("/v3/traces")` client
+2. **Response format**: Converted `AgentResponse` to dict for backward compatibility
+3. **Limited versions**: Only 0.1.x available (not 1.0.0+ as originally planned)
+
+### Breaking Changes
+
+**None** - All API signatures maintained for backward compatibility. Migration was transparent to end users.
+
+### Git Commits
+
+1. `44e0c57` - feat: add lyzr-adk SDK dependency
+2. `28e7ae7` - feat: create LyzrClient wrapper class for SDK
+3. `f476b7d` - feat: implement chat_with_agent_sdk using SDK
+4. `7df214e` - feat: implement get_traces_sdk using SDK HTTP client
+5. `b34bc96` - feat: migrate chat view to use SDK
+6. `07dcec2` - feat: migrate sync to use SDK and fix parameter naming
+7. `593360b` - refactor: remove legacy requests-based API functions
+8. `d79a9ec` - refactor: remove _sdk suffix from function names
+
+### Next Steps (Optional Future Enhancements)
+
+- Enable streaming with `agent.run_stream()` for real-time chat responses
+- Integrate knowledge bases for enhanced context
+- Enable RAI guardrails for responsible AI checks
+- Explore SDK's built-in memory management features
