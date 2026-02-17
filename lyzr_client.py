@@ -71,6 +71,72 @@ API_URL = os.getenv("LYZR_API_URL", "https://agent-prod.studio.lyzr.ai/v3/infere
 TRACES_URL = os.getenv("LYZR_TRACES_URL", "https://agent-prod.studio.lyzr.ai/v3/traces")
 
 
+# --- SDK CHAT FUNCTION ---
+def chat_with_agent_sdk(
+    message: str,
+    user_id: str,
+    session_id: str,
+    agent_id: str = None,
+    managed_agents: list = None
+):
+    """
+    Send a chat message using lyzr-adk SDK.
+
+    Args:
+        message: User's message
+        user_id: User identifier (email)
+        session_id: Session UUID string
+        agent_id: Agent ID (defaults to AGENT_ID env var)
+        managed_agents: List of specialist agents for routing
+
+    Returns:
+        dict: Response with 'response' key, or error string
+
+    Raises:
+        None: Returns error strings instead of raising exceptions
+    """
+    agent_id = agent_id or AGENT_ID
+
+    if not agent_id:
+        return "Error: Missing Lyzr API Credentials. Please configure AGENT_ID."
+
+    try:
+        # Initialize SDK client
+        client = LyzrClient()
+
+        # Get agent instance from agent_id
+        agent = client.studio.agents.get(agent_id)
+
+        # Build run parameters
+        run_kwargs = {
+            "message": message,
+            "user_id": user_id,
+            "session_id": session_id
+        }
+
+        # Add managed_agents if provided (for manager agent routing)
+        if managed_agents:
+            run_kwargs["managed_agents"] = managed_agents
+
+        # Execute chat using SDK
+        response = agent.run(**run_kwargs)
+
+        # Convert AgentResponse to dict format matching old API
+        result = {
+            "response": response.response if hasattr(response, 'response') else str(response)
+        }
+
+        logger.info(f"SDK chat successful for user {user_id}, session {session_id}")
+        return result
+
+    except ValueError as ve:
+        logger.error(f"Configuration error: {ve}")
+        return f"Error: Missing Lyzr API Credentials. Please check your settings."
+    except Exception as e:
+        logger.error(f"SDK chat error: {e}")
+        return f"AI Connection Error: {e}. Please try again."
+
+
 # --- 3. THE 'CHAT' ENGINE ---
 # This function sends your question to the Lyzr chat endpoint and gets an AI response.
 # IMPORTANT: The chat response does NOT include trace data. Traces must be fetched separately

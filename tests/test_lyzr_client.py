@@ -185,3 +185,84 @@ class TestLyzrClient:
         client = LyzrClient()
         assert client.api_key == "db-key-456"
         assert client.studio is not None
+
+
+class TestChatWithAgentSDK:
+    """Tests for chat_with_agent_sdk function using SDK."""
+
+    def test_chat_with_agent_sdk_basic(self, mocker):
+        """Test chat_with_agent_sdk uses SDK's agent.run() method."""
+        from lyzr_client import chat_with_agent_sdk
+
+        # Mock the Agent instance and its run method
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="Test SDK response")
+
+        # Mock studio.agents.get to return our mock agent
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+
+        # Mock LyzrClient to return our mock client
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "test-agent-123")
+        mocker.patch("lyzr_client.get_active_api_key", return_value="test-key")
+
+        result = chat_with_agent_sdk(
+            message="Hello SDK",
+            user_id="user@test.com",
+            session_id="session-123"
+        )
+
+        assert "response" in result
+        assert result["response"] == "Test SDK response"
+        mock_agent.run.assert_called_once_with(
+            message="Hello SDK",
+            user_id="user@test.com",
+            session_id="session-123"
+        )
+
+    def test_chat_with_agent_sdk_missing_agent_id(self, mocker):
+        """Test chat_with_agent_sdk returns error when AGENT_ID is missing."""
+        from lyzr_client import chat_with_agent_sdk
+
+        mocker.patch("lyzr_client.AGENT_ID", None)
+
+        result = chat_with_agent_sdk(
+            message="Hello",
+            user_id="user@test.com",
+            session_id="session-123"
+        )
+
+        assert "Error" in result
+        assert "Missing" in result
+
+    def test_chat_with_agent_sdk_with_managed_agents(self, mocker):
+        """Test chat_with_agent_sdk passes managed_agents via kwargs."""
+        from lyzr_client import chat_with_agent_sdk
+
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="Routed response")
+
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "manager-agent")
+        mocker.patch("lyzr_client.get_active_api_key", return_value="test-key")
+
+        managed_agents = [
+            {"id": "agent-1", "name": "Specialist 1"},
+            {"id": "agent-2", "name": "Specialist 2"}
+        ]
+
+        result = chat_with_agent_sdk(
+            message="Route this",
+            user_id="user@test.com",
+            session_id="session-123",
+            managed_agents=managed_agents
+        )
+
+        # Verify agent.run() was called with managed_agents in kwargs
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "managed_agents" in call_kwargs
+        assert call_kwargs["managed_agents"] == managed_agents
