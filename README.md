@@ -10,15 +10,14 @@ Whether you're a student, teacher, or curious learner, this app lets you chat wi
 1. [What Is This App?](#-what-is-this-app)
 2. [Who Is It For?](#-who-is-it-for)
 3. [What Can You Do? (Features)](#-what-can-you-do-features)
-4. [How Does It Look and Feel?](#-how-does-it-look-and-feel)
-5. [What Do You Need to Run It?](#-what-do-you-need-to-run-it)
-6. [Step-by-Step: Getting Started](#-step-by-step-getting-started)
-7. [Project Structure (Where Everything Lives)](#-project-structure-where-everything-lives)
-8. [Database and Data Storage](#-database-and-data-storage)
-9. [Testing](#-testing)
-10. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
-11. [Troubleshooting](#-troubleshooting)
-12. [License & Credits](#-license--credits)
+4. [What Do You Need to Run It?](#-what-do-you-need-to-run-it)
+5. [Step-by-Step: Getting Started](#-step-by-step-getting-started)
+6. [Project Structure (Where Everything Lives)](#-project-structure-where-everything-lives)
+7. [Database and Data Storage](#-database-and-data-storage)
+8. [Testing](#-testing)
+9. [Technology Used (For the Curious)](#-technology-used-for-the-curious)
+10. [Troubleshooting](#-troubleshooting)
+11. [License & Credits](#-license--credits)
 
 ---
 
@@ -70,16 +69,6 @@ The app runs in your **web browser**. You don't need to install anything on your
 | **Per-user limits** | In Settings you can pick a user and give them a custom credit limit (higher or lower than the default). |
 | **View as user** | On the Dashboard, admins can choose "View dashboard as: [user]" to see that user's usage and logs only. |
 | **No credit cap** | The administrator account is not blocked by the credit limit; they can keep chatting even when the limit would normally apply. |
-
----
-
-## 🎨 How Does It Look and Feel?
-
-- **Dark theme** — The app uses a dark background (charcoal / navy tones) so it’s easy on the eyes.
-- **Glassmorphism style** — Cards and panels look slightly translucent with soft borders, like frosted glass.
-- **Font** — A modern, readable font (Outfit) is used for titles and text.
-- **Layout** — Wide layout: a **sidebar on the left** (logo, user name, credits, navigation, recent chats, New Chat, Settings for admin, Logout) and the **main area** on the right (Chat, Dashboard, or Settings).
-- **Charts** — The Dashboard uses interactive Plotly charts (you can hover to see exact values).
 
 ---
 
@@ -217,11 +206,6 @@ Streamlit_app/
 - **lyzr_client.py** — Sends your message to Lyzr chat endpoint and gets the AI reply; also fetches "traces" (usage receipts) from the separate Lyzr traces endpoint.
 - **utils/sync.py** — Takes traces from Lyzr, figures out which user each trace belongs to, converts cost to credits, and saves them into `users.db` so the dashboard and credit meter are correct.
 
-<<<<<<< HEAD
-
----
-=======
->>>>>>> a83a7bf (updated Readme)
 
 ## 🗄️ Database and Data Storage
 
