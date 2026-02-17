@@ -220,41 +220,6 @@ Streamlit_app/
 - **lyzr_client.py** — Sends your message to Lyzr chat endpoint and gets the AI reply; also fetches "traces" (usage receipts) from the separate Lyzr traces endpoint.
 - **utils/sync.py** — Takes traces from Lyzr, figures out which user each trace belongs to, converts cost to credits, and saves them into `users.db` so the dashboard and credit meter are correct.
 
----
-
-## 📊 How Credits and Usage Are Tracked
-
-### What is a "trace"?
-
-**IMPORTANT:** Traces are **NOT** returned in the chat response. The app must call a **separate traces endpoint** to retrieve trace data.
-
-After the app sends a message to Lyzr and gets a chat response, it separately calls the Lyzr traces endpoint (`/v3/traces`) to fetch **trace** records — small usage receipts that include:
-
-- A unique **trace ID**
-- **Session ID** and **user ID** (when Lyzr includes them)
-- **Cost** (e.g. in cents or a raw unit)
-- **Timestamps**, and sometimes the **message** and **response** text
-
-The app treats "credits" as this cost converted to a dollar-like value (e.g. divided by 100). The sum of these credits per user is what you see as "Credits Used" and what is compared to the user’s **credit limit**.
-
-### How does the app know which trace belongs to which user?
-
-Sometimes Lyzr returns traces without a user ID. The app uses three checks (in order):
-
-1. **Direct match** — The trace’s `user_id` equals the username in our database.
-2. **Saved mapping** — When we send a chat message, we save a link between a trace/session and the current user; when we sync, we look up that link.
-3. **Fuzzy match** — If the trace has no user ID, we try to match it to a user by comparing the trace’s time with recent "fuzzy" timestamps we saved for that user (within a 120-second window). This helps when Lyzr is slightly delayed.
-
-Only traces that pass one of these checks are stored under that user’s account. Others are skipped so users don’t see each other’s usage.
-
-### When does syncing happen?
-
-- **Before each new chat message** — So your credit total is up to date and we can block you if you’ve hit your limit.
-- **When you click "Refresh & Sync" on the Dashboard** — So the charts and logs show the latest data.
-
-Sync is done in `utils/sync.py`: it calls the Lyzr traces endpoint (`get_traces()`), fetches recent traces, attributes them to users as above, converts cost to credits, and saves them into the `traces` table in `users.db`.
-
-**Note:** The chat endpoint (`/v3/inference/chat/`) and traces endpoint (`/v3/traces`) are separate. The chat response contains only the AI's text reply, while trace/usage data must be fetched from the traces endpoint.
 
 ---
 
@@ -268,7 +233,7 @@ The app uses a single **SQLite** file: **`users.db`**. It is created automatical
 - **trace_user_mapping** — Links trace IDs (or temporary IDs) to users and sessions for attribution.
 - **settings** — Key-value store: e.g. `max_credits` (default limit), `admin_api_key` (Lyzr API key from Settings page).
 
-Passwords are hashed with **bcrypt**; they are never stored in plain text. The database uses WAL (Write-Ahead Logging) for better concurrency. For more detail, see **DATABASE.md**. There is also **MONGODB_MIGRATION.md** for a possible future move to MongoDB.
+Passwords are hashed with **bcrypt**; they are never stored in plain text. The database uses WAL (Write-Ahead Logging) for better concurrency. For more detail, see **DATABASE.md**. 
 
 ---
 
