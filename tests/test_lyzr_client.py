@@ -4,8 +4,8 @@ Tests for lyzr_client.py — Covers the Lyzr SDK client functions.
 Modules tested:
   - get_active_api_key
   - LyzrClient (SDK wrapper)
-  - chat_with_agent_sdk (SDK-based chat)
-  - get_traces_sdk (SDK-based traces)
+  - chat_with_agent (SDK-based chat)
+  - get_traces (SDK-based traces)
 """
 
 import pytest
@@ -32,7 +32,7 @@ class TestGetActiveApiKey:
 
 # Old TestChatWithAgent and TestGetTraces classes removed
 # Legacy functions have been replaced with SDK-based implementations
-# See TestChatWithAgentSDK and TestGetTracesSDK below
+# See TestChatWithAgent and TestGetTraces below
 
 
 class TestLyzrSDKImport:
@@ -95,12 +95,12 @@ class TestLyzrClient:
         assert client.studio is not None
 
 
-class TestChatWithAgentSDK:
-    """Tests for chat_with_agent_sdk function using SDK."""
+class TestChatWithAgent:
+    """Tests for chat_with_agent function using SDK."""
 
-    def test_chat_with_agent_sdk_basic(self, mocker):
-        """Test chat_with_agent_sdk uses SDK's agent.run() method."""
-        from lyzr_client import chat_with_agent_sdk
+    def test_chat_with_agent_basic(self, mocker):
+        """Test chat_with_agent uses SDK's agent.run() method."""
+        from lyzr_client import chat_with_agent
 
         # Mock the Agent instance and its run method
         mock_agent = MagicMock()
@@ -115,7 +115,7 @@ class TestChatWithAgentSDK:
         mocker.patch("lyzr_client.AGENT_ID", "test-agent-123")
         mocker.patch("lyzr_client.get_active_api_key", return_value="test-key")
 
-        result = chat_with_agent_sdk(
+        result = chat_with_agent(
             message="Hello SDK",
             user_id="user@test.com",
             session_id="session-123"
@@ -129,13 +129,13 @@ class TestChatWithAgentSDK:
             session_id="session-123"
         )
 
-    def test_chat_with_agent_sdk_missing_agent_id(self, mocker):
-        """Test chat_with_agent_sdk returns error when AGENT_ID is missing."""
-        from lyzr_client import chat_with_agent_sdk
+    def test_chat_with_agent_missing_agent_id(self, mocker):
+        """Test chat_with_agent returns error when AGENT_ID is missing."""
+        from lyzr_client import chat_with_agent
 
         mocker.patch("lyzr_client.AGENT_ID", None)
 
-        result = chat_with_agent_sdk(
+        result = chat_with_agent(
             message="Hello",
             user_id="user@test.com",
             session_id="session-123"
@@ -144,9 +144,9 @@ class TestChatWithAgentSDK:
         assert "Error" in result
         assert "Missing" in result
 
-    def test_chat_with_agent_sdk_with_managed_agents(self, mocker):
-        """Test chat_with_agent_sdk passes managed_agents via kwargs."""
-        from lyzr_client import chat_with_agent_sdk
+    def test_chat_with_agent_with_managed_agents(self, mocker):
+        """Test chat_with_agent passes managed_agents via kwargs."""
+        from lyzr_client import chat_with_agent
 
         mock_agent = MagicMock()
         mock_agent.run.return_value = MagicMock(response="Routed response")
@@ -163,7 +163,7 @@ class TestChatWithAgentSDK:
             {"id": "agent-2", "name": "Specialist 2"}
         ]
 
-        result = chat_with_agent_sdk(
+        result = chat_with_agent(
             message="Route this",
             user_id="user@test.com",
             session_id="session-123",
@@ -176,28 +176,28 @@ class TestChatWithAgentSDK:
         assert call_kwargs["managed_agents"] == managed_agents
 
 
-class TestLegacyFunctionsRemoved:
-    """Tests to verify old requests-based functions are removed."""
+class TestFinalFunctionNames:
+    """Tests to verify SDK functions use clean names without _sdk suffix."""
 
-    def test_legacy_functions_removed(self):
-        """Verify old requests-based functions are removed."""
+    def test_final_function_names(self):
+        """Verify SDK functions use clean names without _sdk suffix."""
         import lyzr_client
 
-        # These old functions should not exist
-        assert not hasattr(lyzr_client, "chat_with_agent")
-        assert not hasattr(lyzr_client, "get_traces")
+        # Final clean names should exist (SDK-based implementations)
+        assert hasattr(lyzr_client, "chat_with_agent")
+        assert hasattr(lyzr_client, "get_traces")
 
-        # New SDK functions should exist
-        assert hasattr(lyzr_client, "chat_with_agent_sdk")
-        assert hasattr(lyzr_client, "get_traces_sdk")
+        # SDK suffix versions should not exist
+        assert not hasattr(lyzr_client, "chat_with_agent_sdk")
+        assert not hasattr(lyzr_client, "get_traces_sdk")
 
 
-class TestGetTracesSDK:
-    """Tests for get_traces_sdk function using SDK."""
+class TestGetTraces:
+    """Tests for get_traces function using SDK."""
 
-    def test_get_traces_sdk_basic(self, mocker):
-        """Test get_traces_sdk retrieves traces from SDK HTTP client."""
-        from lyzr_client import get_traces_sdk
+    def test_get_traces_basic(self, mocker):
+        """Test get_traces retrieves traces from SDK HTTP client."""
+        from lyzr_client import get_traces
 
         # Mock HTTP response
         mock_response = [
@@ -221,7 +221,7 @@ class TestGetTracesSDK:
         mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
         mocker.patch("lyzr_client.AGENT_ID", "test-agent-123")
 
-        result = get_traces_sdk(
+        result = get_traces(
             agent_id="test-agent-123",
             user_id="user@test.com",
             limit=100
@@ -231,9 +231,9 @@ class TestGetTracesSDK:
         assert result[0]["trace_id"] == "trace-1"
         assert result[0]["action_cost"] == 150
 
-    def test_get_traces_sdk_with_filters(self, mocker):
-        """Test get_traces_sdk passes filter parameters correctly."""
-        from lyzr_client import get_traces_sdk
+    def test_get_traces_with_filters(self, mocker):
+        """Test get_traces passes filter parameters correctly."""
+        from lyzr_client import get_traces
 
         mock_response = []
         mock_client = MagicMock()
@@ -242,7 +242,7 @@ class TestGetTracesSDK:
         mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
         mocker.patch("lyzr_client.AGENT_ID", "test-agent")
 
-        get_traces_sdk(
+        get_traces(
             agent_id="test-agent",
             user_id="user@test.com",
             session_id="session-123",
@@ -254,11 +254,11 @@ class TestGetTracesSDK:
         call_args = mock_client.studio._http.get.call_args
         assert "/v3/traces" in str(call_args)
 
-    def test_get_traces_sdk_missing_agent_id(self, mocker):
-        """Test get_traces_sdk returns empty list when agent_id is missing."""
-        from lyzr_client import get_traces_sdk
+    def test_get_traces_missing_agent_id(self, mocker):
+        """Test get_traces returns empty list when agent_id is missing."""
+        from lyzr_client import get_traces
 
         mocker.patch("lyzr_client.AGENT_ID", None)
 
-        result = get_traces_sdk()
+        result = get_traces()
         assert result == []

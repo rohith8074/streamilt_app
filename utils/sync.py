@@ -1,6 +1,6 @@
 import os
 from auth import get_latest_trace_timestamp, save_traces_bulk, get_mapping_for_trace, get_fuzzy_session
-from lyzr_client import get_traces_sdk, AGENT_ID
+from lyzr_client import get_traces, AGENT_ID
 
 
 def sync_user_activity(username, session_id):
@@ -13,7 +13,7 @@ def sync_user_activity(username, session_id):
     last_sync_time = get_latest_trace_timestamp(user_id=username)
 
     # 2. Fetch the latest receipts (traces) from the Lyzr cloud using SDK.
-    api_traces = get_traces_sdk(start_time=last_sync_time, limit=500)
+    api_traces = get_traces(start_time=last_sync_time, limit=500)
 
     if not api_traces:
         return 0

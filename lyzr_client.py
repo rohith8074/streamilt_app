@@ -72,7 +72,7 @@ TRACES_URL = os.getenv("LYZR_TRACES_URL", "https://agent-prod.studio.lyzr.ai/v3/
 
 
 # --- SDK CHAT FUNCTION ---
-def chat_with_agent_sdk(
+def chat_with_agent(
     message: str,
     user_id: str,
     session_id: str,
@@ -138,7 +138,7 @@ def chat_with_agent_sdk(
 
 
 # --- SDK TRACES FUNCTION ---
-def get_traces_sdk(
+def get_traces(
     agent_id: str = None,
     user_id: str = None,
     session_id: str = None,
