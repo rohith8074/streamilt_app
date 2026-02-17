@@ -10,7 +10,7 @@ from auth import (  # Importing our database helper functions
     save_chat_message,
     save_trace_mapping,
 )
-from lyzr_client import chat_with_agent, AGENT_ID  # For talking to the AI
+from lyzr_client import chat_with_agent_sdk, AGENT_ID  # For talking to the AI via SDK
 
 
 def show_chat_view():
@@ -91,9 +91,9 @@ def show_chat_view():
             print(f"\n[USER QUERY]: {prompt}")
             print(f"[SESSION ID]: {st.session_state.session_id}")
 
-            # This is the actual call to the Lyzr AI service (chat endpoint).
+            # This is the actual call to the Lyzr AI service using SDK.
             # Traces must be fetched separately from the traces endpoint.
-            api_data = chat_with_agent(
+            api_data = chat_with_agent_sdk(
                 message=prompt,
                 user_id=st.session_state.username,
                 session_id=st.session_state.session_id,
