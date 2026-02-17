@@ -125,3 +125,16 @@ class TestGetTraces:
 
         traces = get_traces()
         assert len(traces) == 2
+
+
+class TestLyzrSDKImport:
+    """Tests for lyzr-adk SDK availability."""
+
+    def test_lyzr_adk_import(self):
+        """Verify lyzr-adk SDK can be imported."""
+        try:
+            from lyzr import Studio, Agent
+            assert Studio is not None
+            assert Agent is not None
+        except ImportError:
+            pytest.fail("lyzr-adk not installed")
