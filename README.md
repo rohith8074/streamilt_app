@@ -190,7 +190,6 @@ Streamlit_app/
 ├── app.py                 # Main entry: starts the app, loads login/chat/dashboard/settings
 ├── auth.py                # Database and security: users, passwords, sessions, credits, traces, settings
 ├── lyzr_client.py         # Talks to Lyzr: send chat messages, fetch usage (traces)
-├── prompts.py             # Optional prompt text for the Lyzr agent (used when configuring the agent in Lyzr)
 ├── .env                   # Your secrets (API key, agent IDs) — you create this from .env.example
 ├── .env.example            # Template showing which variables to set
 ├── .gitignore             # Files excluded from Git (venv, .env, database, caches)
@@ -211,7 +210,6 @@ Streamlit_app/
 │   ├── test_sync.py       # Tests for sync.py (12 tests: credit division, attribution, security, edge cases)
 │   ├── test_lyzr_client.py # Tests for lyzr_client.py (12 tests: API key, chat, traces — all HTTP mocked)
 │   └── test_ui.py         # Tests for ui.py (5 tests: base64 encoding, CSS injection smoke test)
-└── Prompts/               # Optional prompt files for reference (e.g. when configuring your agent in Lyzr)
 ```
 
 - **app.py** — What runs when you type `streamlit run app.py`. It sets up the database, loads styling, and shows either the login page or the main app (sidebar + Chat/Dashboard/Settings).
