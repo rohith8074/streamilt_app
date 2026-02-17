@@ -131,6 +131,58 @@ Session ID persists across refreshes via `get_user_session()` / `update_user_ses
 - All Lyzr API calls mocked with `pytest-mock` (no real network calls)
 - Tests run in ~5 seconds total
 
+### Database Connection Pattern
+
+All database operations use the `db_connection()` context manager:
+
+```python
+from auth import db_connection
+
+with db_connection() as conn:
+    c = conn.cursor()
+    c.execute("SELECT ...")
+    result = c.fetchone()
+# Connection automatically closed, even on errors
+```
+
+**Benefits**:
+- Automatic cleanup (finally block)
+- Exception-safe
+- Consistent error handling
+- Reduces boilerplate
+
+**Do not** manually open/close connections except in special cases.
+
+### Exception Handling Standards
+
+**Use specific exceptions:**
+
+```python
+# ✅ Good - Specific exceptions
+try:
+    conn = sqlite3.connect(DB_PATH)
+except (sqlite3.Error, ValueError) as e:
+    logger.error("Database operation failed: %s", e)
+
+# ❌ Bad - Bare except or too broad
+try:
+    conn = sqlite3.connect(DB_PATH)
+except:  # Catches SystemExit, KeyboardInterrupt!
+    pass
+```
+
+**Always initialize resources before try:**
+
+```python
+conn = None
+try:
+    conn = sqlite3.connect(DB_PATH)
+    # use conn
+finally:
+    if conn:
+        conn.close()
+```
+
 ## Common Tasks
 
 ### Adding a New View
