@@ -364,46 +364,54 @@ def update_user_limit(username, limit):
 
 def get_fuzzy_session(user_id, timestamp_str):
     """
-    A clever detective function that finds a session ID by matching a user 
+    A clever detective function that finds a session ID by matching a user
     and a nearby timestamp. Used when the AI receipt doesn't have an ID yet.
     """
     if not user_id or not timestamp_str:
         return None
-    
+
+    conn = None
     try:
         from datetime import datetime
+
         # 1. Parse the time from the cloud receipt
         try:
             # Lyzr usually sends time in ISO format (e.g., 2026-02-17T...)
             trace_time = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00")).replace(tzinfo=None)
-        except:
+        except (ValueError, AttributeError):
+            # Fall back to strptime for non-ISO formats
             trace_time = datetime.strptime(timestamp_str[:19], "%Y-%m-%dT%H:%M:%S")
 
         conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
         c = conn.cursor()
-        
+
         # 2. Look for our 'fuzzy' breadcrumbs for this user
         c.execute("SELECT trace_id, session_id FROM trace_user_mapping WHERE user_id = ? AND trace_id LIKE 'fuzzy_%'", (user_id,))
         fuzzy_entries = c.fetchall()
-        conn.close()
-        
+
         for entry_id, session_id in fuzzy_entries:
             try:
                 time_part = entry_id.split("_")[-1]
                 map_time = datetime.fromisoformat(time_part).replace(tzinfo=None)
-                
+
                 # 3. If the chat happened within 120 seconds of the receipt, it's a match!
                 # We increased this to 120s to account for slight cloud delays.
                 time_diff = abs((trace_time - map_time).total_seconds())
                 if time_diff < 120:
                     return session_id
-                else:
-                    # Log slight misses to help find the right window
-                    if time_diff < 3600: # only log if within an hour
-                        print(f"⌛ [FUZZY NEAR MISS]: Diff {time_diff:.1f}s between Cloud({trace_time.strftime('%H:%M:%S')}) and Local({map_time.strftime('%H:%M:%S')})")
-            except:
+
+                # Log slight misses to help find the right window
+                if time_diff < 3600: # only log if within an hour
+                    print(f"⌛ [FUZZY NEAR MISS]: Diff {time_diff:.1f}s between Cloud({trace_time.strftime('%H:%M:%S')}) and Local({map_time.strftime('%H:%M:%S')})")
+            except (ValueError, IndexError, AttributeError):
+                # Skip entries with malformed timestamps
                 continue
-    except Exception as e:
-        logger.error(f"Fuzzy detective error: {e}")
-        
-    return None
+
+        return None
+
+    except (sqlite3.Error, ValueError, ImportError) as e:
+        logger.error("Fuzzy session lookup failed for %s: %s", user_id, e)
+        return None
+    finally:
+        if conn:
+            conn.close()

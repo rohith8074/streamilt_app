@@ -393,3 +393,13 @@ class TestFuzzySession:
         assert get_fuzzy_session(None, None) is None
         assert get_fuzzy_session("alice", None) is None
         assert get_fuzzy_session(None, "2026-01-01T00:00:00") is None
+
+    def test_get_fuzzy_session_handles_database_error(self, mocker):
+        """Test that get_fuzzy_session handles database errors."""
+        import sqlite3
+        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("DB error"))
+
+        result = get_fuzzy_session("test@example.com", "2026-02-17T10:00:00Z")
+
+        # Should return None on error
+        assert result is None
