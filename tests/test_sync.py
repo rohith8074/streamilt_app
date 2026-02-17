@@ -19,7 +19,7 @@ class TestCreditDivision:
 
     def test_action_cost_divided_by_100(self, mocker):
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_div",
@@ -41,7 +41,7 @@ class TestCreditDivision:
     def test_total_credits_field_divided(self, mocker):
         """Some API responses use 'total_credits' instead of 'action_cost'."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_tc",
@@ -60,7 +60,7 @@ class TestCreditDivision:
 
     def test_zero_cost_trace(self, mocker):
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_zero",
@@ -80,7 +80,7 @@ class TestCreditDivision:
     def test_missing_cost_defaults_to_zero(self, mocker):
         """If neither action_cost nor total_credits is present, credits should be 0."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[{"trace_id": "t_nocost", "user_id": "alice", "trace_start_time": "2026-02-17T10:00:00Z"}],
         )
         mocker.patch("utils.sync.get_latest_trace_timestamp", return_value=None)
@@ -97,7 +97,7 @@ class TestUserAttribution:
     def test_direct_user_match(self, mocker):
         """Traces where user_id matches the calling user should be saved."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_direct",
@@ -119,7 +119,7 @@ class TestUserAttribution:
         save_trace_mapping("t_mapped", "bob", "sess_bob")
 
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_mapped",
@@ -143,7 +143,7 @@ class TestUserAttribution:
         save_trace_mapping(f"fuzzy_carol_{time_now}", "carol", "sess_carol")
 
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {"trace_id": "t_fuzzy", "user_id": "unknown", "action_cost": 7.0, "trace_start_time": time_now}
             ],
@@ -163,7 +163,7 @@ class TestSecuritySkip:
     def test_other_user_trace_skipped(self, mocker):
         """A trace with user_id='bob' should NOT be saved when syncing for 'alice'."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_bobs",
@@ -183,7 +183,7 @@ class TestSecuritySkip:
     def test_mixed_traces_only_own_saved(self, mocker):
         """Only the current user's traces should be saved from a mixed batch."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "trace_id": "t_mine",
@@ -211,14 +211,14 @@ class TestEdgeCases:
     """Edge cases and error handling for sync."""
 
     def test_empty_api_response(self, mocker):
-        mocker.patch("utils.sync.get_traces", return_value=[])
+        mocker.patch("utils.sync.get_traces_sdk", return_value=[])
         mocker.patch("utils.sync.get_latest_trace_timestamp", return_value=None)
 
         count = sync_user_activity("alice", "s1")
         assert count == 0
 
     def test_none_api_response(self, mocker):
-        mocker.patch("utils.sync.get_traces", return_value=None)
+        mocker.patch("utils.sync.get_traces_sdk", return_value=None)
         mocker.patch("utils.sync.get_latest_trace_timestamp", return_value=None)
 
         count = sync_user_activity("alice", "s1")
@@ -227,7 +227,7 @@ class TestEdgeCases:
     def test_trace_without_trace_id_skipped(self, mocker):
         """A trace missing a trace_id should be skipped gracefully."""
         mocker.patch(
-            "utils.sync.get_traces",
+            "utils.sync.get_traces_sdk",
             return_value=[
                 {
                     "user_id": "alice",
@@ -248,7 +248,7 @@ class TestEdgeCases:
         trace_data = [
             {"trace_id": "t_dup", "user_id": "alice", "action_cost": 10.0, "trace_start_time": "2026-02-17T10:00:00Z"}
         ]
-        mocker.patch("utils.sync.get_traces", return_value=trace_data)
+        mocker.patch("utils.sync.get_traces_sdk", return_value=trace_data)
         mocker.patch("utils.sync.get_latest_trace_timestamp", return_value=None)
 
         sync_user_activity("alice", "s1")

@@ -144,7 +144,7 @@ def get_traces_sdk(
     session_id: str = None,
     limit: int = 100,
     offset: int = 0,
-    since_timestamp: str = None
+    start_time: str = None
 ):
     """
     Retrieve traces from Lyzr using SDK's HTTP client.
@@ -158,7 +158,7 @@ def get_traces_sdk(
         session_id: Filter by session ID
         limit: Maximum number of traces to retrieve
         offset: Number of traces to skip
-        since_timestamp: ISO timestamp to fetch traces after
+        start_time: ISO timestamp to fetch traces after
 
     Returns:
         list: List of trace dictionaries
@@ -186,14 +186,14 @@ def get_traces_sdk(
             params["user_id"] = user_id
         if session_id:
             params["session_id"] = session_id
-        if since_timestamp:
+        if start_time:
             # Optimization: Look slightly before start time to avoid missing data
             try:
                 from datetime import datetime, timedelta
-                dt = datetime.fromisoformat(since_timestamp.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
                 params["start_time"] = (dt - timedelta(seconds=1)).isoformat()
             except:
-                params["start_time"] = since_timestamp
+                params["start_time"] = start_time
 
         # Call traces endpoint using SDK's HTTP client
         # Note: Using internal _http client since SDK doesn't expose public traces API

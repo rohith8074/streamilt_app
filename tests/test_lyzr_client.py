@@ -323,7 +323,7 @@ class TestGetTracesSDK:
             user_id="user@test.com",
             session_id="session-123",
             limit=50,
-            since_timestamp="2026-02-17T10:00:00Z"
+            start_time="2026-02-17T10:00:00Z"
         )
 
         # Verify HTTP client was called with correct endpoint and params
