@@ -4,6 +4,7 @@ import bcrypt      # Security tool used to scramble (hash) passwords so they are
 import logging     # The app's diary (Logs everything that happens behind the scenes)
 import uuid        # Generates unique, one-of-a-kind ID codes
 import os          # Used to read secret settings from your computer
+from contextlib import contextmanager
 
 # --- 2. LOGGING SETUP ---
 # This part makes sure that if anything goes wrong, we save a record of it.
@@ -12,6 +13,26 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = "users.db" # This is the name of our database file
 DB_TIMEOUT = 20      # We wait up to 20 seconds if the database is busy
+
+@contextmanager
+def db_connection():
+    """
+    Context manager for database connections.
+
+    Usage:
+        with db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT ...")
+
+    Ensures connection is always closed, even on errors.
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
+        yield conn
+    finally:
+        if conn:
+            conn.close()
 
 # --- 3. DATABASE INITIALIZATION (The Filing Cabinet Setup) ---
 # This function creates our tables (drawers) if they don't already exist.

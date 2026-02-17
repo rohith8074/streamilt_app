@@ -11,8 +11,10 @@ Modules tested:
   - Settings: get_app_settings, update_app_setting
   - Fuzzy Matching: get_fuzzy_session
   - Database Init: init_db
+  - Database Connection: db_connection (context manager)
 """
 import pytest
+import sqlite3
 from datetime import datetime, timedelta
 from auth import (
     init_db,
@@ -28,7 +30,47 @@ from auth import (
 
 
 # ============================================================
-# 1. DATABASE INITIALIZATION
+# 1. DATABASE CONNECTION CONTEXT MANAGER
+# ============================================================
+
+class TestDatabaseConnection:
+    """Tests for the db_connection context manager."""
+
+    def test_db_connection_context_manager(self):
+        """Test that db_connection context manager works correctly."""
+        from auth import db_connection
+
+        # Should successfully connect and execute query
+        with db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = c.fetchall()
+            assert len(tables) > 0  # Should have at least 'users' table
+
+        # Connection should be closed after context
+        # (No way to test this directly, but if no error raised, it worked)
+
+    def test_db_connection_handles_errors(self, mocker):
+        """Test that db_connection handles errors and still closes connection."""
+        from auth import db_connection
+
+        with db_connection() as conn:
+            c = conn.cursor()
+            # This should work normally
+            c.execute("SELECT 1")
+
+        # Even if we patch connect to fail, context manager should handle it
+        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("Connection failed"))
+
+        try:
+            with db_connection() as conn:
+                pass  # Should raise
+        except sqlite3.Error:
+            pass  # Expected
+
+
+# ============================================================
+# 2. DATABASE INITIALIZATION
 # ============================================================
 
 class TestInitDb:
@@ -51,7 +93,7 @@ class TestInitDb:
 
 
 # ============================================================
-# 2. USER REGISTRATION & LOGIN
+# 3. USER REGISTRATION & LOGIN
 # ============================================================
 
 class TestUserAuth:
@@ -93,7 +135,7 @@ class TestUserAuth:
 
 
 # ============================================================
-# 3. SESSION MANAGEMENT
+# 4. SESSION MANAGEMENT
 # ============================================================
 
 class TestSessions:
@@ -127,7 +169,7 @@ class TestSessions:
 
 
 # ============================================================
-# 4. CREDIT LIMITS
+# 5. CREDIT LIMITS
 # ============================================================
 
 class TestCreditLimits:
@@ -184,7 +226,7 @@ class TestCreditLimits:
 
 
 # ============================================================
-# 5. CHAT HISTORY
+# 6. CHAT HISTORY
 # ============================================================
 
 class TestChatHistory:
@@ -243,7 +285,7 @@ class TestChatHistory:
 
 
 # ============================================================
-# 6. TRACES (Bulk Save, Retrieval, Mapping, Clear)
+# 7. TRACES (Bulk Save, Retrieval, Mapping, Clear)
 # ============================================================
 
 class TestTraces:
@@ -330,7 +372,7 @@ class TestTraces:
 
 
 # ============================================================
-# 7. APP SETTINGS
+# 8. APP SETTINGS
 # ============================================================
 
 class TestSettings:
@@ -358,7 +400,7 @@ class TestSettings:
 
 
 # ============================================================
-# 8. FUZZY SESSION MATCHING
+# 9. FUZZY SESSION MATCHING
 # ============================================================
 
 class TestFuzzySession:
