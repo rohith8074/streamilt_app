@@ -38,69 +38,68 @@ def db_connection():
 # This function creates our tables (drawers) if they don't already exist.
 def init_db():
     """Initializes the database and creates all necessary tables for Users, Traces, and Settings."""
-    conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
-    c = conn.cursor()
-    
-    # Enable a 'high-performance' mode for our database
-    c.execute("PRAGMA journal_mode=WAL")
-    
-    # TABLE 1: USERS (Stores usernames and passwords)
-    c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (username TEXT PRIMARY KEY, password TEXT, session_id TEXT)''')
-    
-    # Update the users table if we added new features (like credit limits)
-    c.execute("PRAGMA table_info(users)")
-    user_columns = [column[1] for column in c.fetchall()]
-    if 'session_id' not in user_columns:
-        c.execute("ALTER TABLE users ADD COLUMN session_id TEXT")
-    if 'credit_limit' not in user_columns:
-        c.execute("ALTER TABLE users ADD COLUMN credit_limit REAL")
+    with db_connection() as conn:
+        c = conn.cursor()
 
-    # TABLE 2: TRACES (Receipts of AI interactions)
-    c.execute('''CREATE TABLE IF NOT EXISTS traces
-                 (trace_id TEXT PRIMARY KEY, user_id TEXT, agent_id TEXT, 
-                  credits REAL, created_at TIMESTAMP)''')
-    
-    # Ensure current tables have all the columns needed for new features
-    c.execute("PRAGMA table_info(traces)")
-    existing_trace_cols = [column[1] for column in c.fetchall()]
-    for col in ['input', 'output', 'session_id', 'inspect']:
-        if col not in existing_trace_cols:
-            c.execute(f"ALTER TABLE traces ADD COLUMN {col} TEXT")
-        
-    # TABLE 3: MAPPINGS (Connects anonymous AI records to real users)
-    c.execute('''CREATE TABLE IF NOT EXISTS trace_user_mapping
-                 (trace_id TEXT PRIMARY KEY, user_id TEXT, session_id TEXT)''')
-    
-    # TABLE 4: SETTINGS (Global rules for the entire app)
-    c.execute('''CREATE TABLE IF NOT EXISTS settings
-                 (key TEXT PRIMARY KEY, value TEXT)''')
-    
-    # TABLE 5: CHAT HISTORY (Saves your actual conversations)
-    c.execute('''CREATE TABLE IF NOT EXISTS chat_messages
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                  username TEXT, 
-                  session_id TEXT, 
-                  role TEXT, 
-                  content TEXT, 
-                  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    # Set up some default rules if they are missing.
-    # Admin API key is left empty so the admin must set it manually in Settings (never pre-filled from .env).
-    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('max_credits', '2.0')")
-    
-    # Ensure admin_api_key exists and is empty by default (not pre-filled from .env).
-    # If it doesn't exist, create it empty. If it exists, check if it needs to be cleared.
-    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_api_key', '')")
-    
-    # Check if there's an existing value that might be from old code (pre-filled from .env).
-    # We check if it matches what would be in .env - if so, and if .env has a different value now,
-    # we clear it. But actually, we can't reliably detect this, so we just ensure empty values stay empty.
-    # The admin must manually set the key in Settings - we never auto-populate it.
-    c.execute("UPDATE settings SET value = '' WHERE key = 'admin_api_key' AND (value IS NULL OR value = '' OR trim(value) = '')")
+        # Enable a 'high-performance' mode for our database
+        c.execute("PRAGMA journal_mode=WAL")
 
-    conn.commit()
-    conn.close()
+        # TABLE 1: USERS (Stores usernames and passwords)
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (username TEXT PRIMARY KEY, password TEXT, session_id TEXT)''')
+
+        # Update the users table if we added new features (like credit limits)
+        c.execute("PRAGMA table_info(users)")
+        user_columns = [column[1] for column in c.fetchall()]
+        if 'session_id' not in user_columns:
+            c.execute("ALTER TABLE users ADD COLUMN session_id TEXT")
+        if 'credit_limit' not in user_columns:
+            c.execute("ALTER TABLE users ADD COLUMN credit_limit REAL")
+
+        # TABLE 2: TRACES (Receipts of AI interactions)
+        c.execute('''CREATE TABLE IF NOT EXISTS traces
+                     (trace_id TEXT PRIMARY KEY, user_id TEXT, agent_id TEXT,
+                      credits REAL, created_at TIMESTAMP)''')
+
+        # Ensure current tables have all the columns needed for new features
+        c.execute("PRAGMA table_info(traces)")
+        existing_trace_cols = [column[1] for column in c.fetchall()]
+        for col in ['input', 'output', 'session_id', 'inspect']:
+            if col not in existing_trace_cols:
+                c.execute(f"ALTER TABLE traces ADD COLUMN {col} TEXT")
+
+        # TABLE 3: MAPPINGS (Connects anonymous AI records to real users)
+        c.execute('''CREATE TABLE IF NOT EXISTS trace_user_mapping
+                     (trace_id TEXT PRIMARY KEY, user_id TEXT, session_id TEXT)''')
+
+        # TABLE 4: SETTINGS (Global rules for the entire app)
+        c.execute('''CREATE TABLE IF NOT EXISTS settings
+                     (key TEXT PRIMARY KEY, value TEXT)''')
+
+        # TABLE 5: CHAT HISTORY (Saves your actual conversations)
+        c.execute('''CREATE TABLE IF NOT EXISTS chat_messages
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT,
+                      session_id TEXT,
+                      role TEXT,
+                      content TEXT,
+                      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+        # Set up some default rules if they are missing.
+        # Admin API key is left empty so the admin must set it manually in Settings (never pre-filled from .env).
+        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('max_credits', '2.0')")
+
+        # Ensure admin_api_key exists and is empty by default (not pre-filled from .env).
+        # If it doesn't exist, create it empty. If it exists, check if it needs to be cleared.
+        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_api_key', '')")
+
+        # Check if there's an existing value that might be from old code (pre-filled from .env).
+        # We check if it matches what would be in .env - if so, and if .env has a different value now,
+        # we clear it. But actually, we can't reliably detect this, so we just ensure empty values stay empty.
+        # The admin must manually set the key in Settings - we never auto-populate it.
+        c.execute("UPDATE settings SET value = '' WHERE key = 'admin_api_key' AND (value IS NULL OR value = '' OR trim(value) = '')")
+
+        conn.commit()
 
 # --- 4. TRACKING AND AUDITING FUNCTIONS ---
 # These functions help the administrator see exactly what happened in the system.
