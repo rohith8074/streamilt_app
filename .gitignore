@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Streamlit
+.streamlit/
+
+# Databases
+*.db
+*.sqlite3
+
+# Logs and traces
+trace.json
+trace_example_codes.txt
+
+# OS-specific
+.DS_Store
+Thumbs.db
