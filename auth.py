@@ -96,12 +96,21 @@ def save_trace_mapping(trace_id, user_id, session_id):
 
 def get_mapping_for_trace(trace_id):
     """Finds out which user owns a specific AI interaction receipt."""
-    conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
-    c = conn.cursor()
-    c.execute("SELECT user_id, session_id FROM trace_user_mapping WHERE trace_id=?", (trace_id,))
-    result = c.fetchone()
-    conn.close()
-    return (result[0], result[1]) if result else (None, None)
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
+        c = conn.cursor()
+        c.execute("SELECT user_id, session_id FROM trace_user_mapping WHERE trace_id=?", (trace_id,))
+        result = c.fetchone()
+        if result:
+            return result[0], result[1]
+        return None, None
+    except sqlite3.Error as e:
+        logger.error("Failed to get mapping for trace %s: %s", trace_id, e)
+        return None, None
+    finally:
+        if conn:
+            conn.close()
 
 def save_traces_bulk(traces_list):
     """Saves many receipts (traces) into the database at once. Very efficient."""

@@ -318,6 +318,16 @@ class TestTraces:
         assert user_id == "bob"
         assert session_id == "sess_b"
 
+    def test_get_mapping_for_trace_handles_database_error(self, mocker):
+        """Test that get_mapping_for_trace handles database errors."""
+        import sqlite3
+        mocker.patch('auth.sqlite3.connect', side_effect=sqlite3.Error("DB error"))
+
+        result = get_mapping_for_trace("test-trace-id")
+
+        # Should return (None, None) on error
+        assert result == (None, None)
+
 
 # ============================================================
 # 7. APP SETTINGS
