@@ -1,5 +1,4 @@
 # --- 1. SETUP AND TOOLS ---
-import json  # For handling complex data structures
 import logging
 import uuid  # For creating unique session IDs
 from datetime import datetime
@@ -24,6 +23,7 @@ from lyzr_client import (
     evaluate_session,
     get_instruction_file,
 )
+from models import EvalReport, TutorResponse
 from utils.sync import sync_user_activity
 
 
@@ -145,40 +145,25 @@ def _handle_send(prompt: str):
             knowledge_bases=[kb] if kb is not None else None,
         )
 
-        logger.info(
-            "[AGENT RESPONSE]: %s",
-            json.dumps(api_data, indent=2) if isinstance(api_data, dict) else api_data,
-        )
+        logger.info("[AGENT RESPONSE]: %s", api_data)
 
-    # F. PARSE RESPONSE.
-    if isinstance(api_data, dict):
-        response_val = api_data.get("response", "No response from agent.")
-        if isinstance(response_val, str):
-            try:
-                internal_data = json.loads(response_val)
-                response = internal_data.get("response_text") or response_val
-            except (json.JSONDecodeError, ValueError):
-                response = response_val
-        elif isinstance(response_val, dict):
-            response = json.dumps(response_val, indent=2)
-        else:
-            response = response_val
+    # F. EXTRACT FIELDS FROM TYPED RESPONSE.
+    if isinstance(api_data, TutorResponse):
+        response = api_data.response_text
+        tone_up = api_data.tone_up
+        tone_down = api_data.tone_down
+        next_nudge = api_data.next_nudge
 
         # G. TRACE MAPPING: Save fuzzy timestamp mapping for later attribution.
-        active_session = api_data.get("session_id") or st.session_state.session_id
         timestamp_now = datetime.utcnow().isoformat()
         save_trace_mapping(
             f"fuzzy_{st.session_state.username}_{timestamp_now}",
             st.session_state.username,
-            active_session,
+            st.session_state.session_id,
         )
-
-        # If the API returned a new session ID, persist it.
-        if api_data.get("session_id") and api_data["session_id"] != st.session_state.session_id:
-            update_user_session(st.session_state.username, api_data["session_id"])
-            st.session_state.session_id = api_data["session_id"]
     else:
         response = api_data  # Error string from SDK wrapper
+        tone_up = tone_down = next_nudge = ""
 
     # H. POST-INFERENCE SYNC: capture the new trace so credit delta is accurate.
     with st.spinner("Updating credit usage…"):
@@ -192,6 +177,9 @@ def _handle_send(prompt: str):
     st.session_state.messages.append({
         "role": "assistant",
         "content": response,
+        "tone_up": tone_up,
+        "tone_down": tone_down,
+        "next_nudge": next_nudge,
         "credits_used": credits_this_msg,
         "credits_remaining": credits_remaining,
     })
