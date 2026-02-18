@@ -224,18 +224,34 @@ def show_chat_view():
         _show_topic_selector()
         return
 
-    # --- ACTIVE SESSION ---
+    # --- ACTIVE SESSION HEADER ---
     super_topic = st.session_state.get("selected_super_topic", "")
     sub_topic = st.session_state.get("selected_sub_topic", "")
+    messages = st.session_state.get("messages", [])
 
-    st.caption(f"Learning: **{super_topic}** › **{sub_topic}**")
-    if st.session_state.get("session_id"):
-        st.caption(f"Session: `{st.session_state.session_id}`")
+    col_topic, col_count, col_eval, col_new = st.columns([4, 1, 2, 2])
+    with col_topic:
+        st.markdown(f"**{super_topic}** › **{sub_topic}**")
+    with col_count:
+        msg_count = len(messages)
+        st.caption(f"{msg_count} msg{'s' if msg_count != 1 else ''}")
+    with col_eval:
+        if st.button("Evaluate Session", use_container_width=True):
+            _handle_evaluate()
+    with col_new:
+        if st.button("↩ New Topic", use_container_width=True):
+            _reset_session()
+    st.divider()
 
     # Display conversation history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    for msg in messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if msg["role"] == "assistant" and "credits_used" in msg:
+                st.caption(
+                    f"💳 ${msg['credits_used']:.4f} used this message  ·  "
+                    f"${msg['credits_remaining']:.4f} remaining"
+                )
 
     # Input area
     prompt = st.text_area(
@@ -244,25 +260,6 @@ def show_chat_view():
         height=80,
         label_visibility="collapsed",
     )
-
-    # Action buttons
-    col_send, col_eval, col_new = st.columns([2, 2, 3])
-
-    with col_send:
-        send_clicked = st.button("Send Response", type="primary", use_container_width=True)
-    with col_eval:
-        eval_clicked = st.button("Evaluate Session", use_container_width=True)
-    with col_new:
-        new_topic_clicked = st.button("↩ New Topic", use_container_width=True)
-
-    if send_clicked and prompt and prompt.strip():
-        _handle_send(prompt.strip())
-
-    if eval_clicked:
-        _handle_evaluate()
-
-    if new_topic_clicked:
-        _reset_session()
 
     # --- EVALUATION REPORT ---
     if st.session_state.get("evaluation_result"):
