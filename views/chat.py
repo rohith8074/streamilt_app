@@ -132,17 +132,37 @@ def _handle_send(prompt: str):
         st.markdown(prompt)
 
     # E. CALL TUTOR AGENT.
-    kb = st.session_state.get("learning_kb")
+    # On the first turn, prepend the topic instruction file as context so the
+    # agent knows the specific topic — we avoid passing knowledge_bases because
+    # RAG injection overrides the agent's JSON output instructions.
+    user_messages = [m for m in st.session_state.messages if m["role"] == "user"]
+    if len(user_messages) == 1:
+        instruction_file = get_instruction_file(
+            st.session_state.get("selected_super_topic", ""),
+            st.session_state.get("selected_sub_topic", ""),
+        )
+        try:
+            with open(instruction_file, "r", encoding="utf-8") as fh:
+                topic_context = fh.read()
+            agent_message = (
+                f"[TOPIC CONTEXT — use to guide the session but always respond in JSON]\n"
+                f"{topic_context}\n\n"
+                f"[STUDENT MESSAGE]\n{prompt}"
+            )
+        except OSError:
+            agent_message = prompt
+    else:
+        agent_message = prompt
+
     with st.spinner("Thinking…"):
         logger.info("[USER QUERY]: %s", prompt)
         logger.info("[SESSION ID]: %s", st.session_state.session_id)
 
         api_data = chat_with_agent(
-            message=prompt,
+            message=agent_message,
             user_id=st.session_state.username,
             session_id=st.session_state.session_id,
             agent_id=TUTOR_AGENT_ID,
-            knowledge_bases=[kb] if kb is not None else None,
         )
 
         logger.info("[AGENT RESPONSE]: %s", api_data)
