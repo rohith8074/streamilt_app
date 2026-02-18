@@ -215,8 +215,6 @@ def _handle_evaluate():
 def show_chat_view():
     """Build the main AI conversation screen."""
 
-    # Spacer so the heading is not clipped at the top of the viewport
-    st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("### Lyzr AI Tutor")
 
     # --- PRE-SESSION: show topic selector ---
@@ -253,15 +251,11 @@ def show_chat_view():
                     f"${msg['credits_remaining']:.4f} remaining"
                 )
 
-    # Input area
-    prompt = st.text_area(
-        "Your response:",
-        key="chat_input",
-        height=80,
-        label_visibility="collapsed",
-    )
-
     # --- EVALUATION REPORT ---
     if st.session_state.get("evaluation_result"):
         with st.expander("Session Evaluation Report", expanded=True):
             st.markdown(st.session_state.evaluation_result)
+
+    # --- CHAT INPUT (native sticky bottom) ---
+    if prompt := st.chat_input("Ask a question or share your thoughts…"):
+        _handle_send(prompt)
