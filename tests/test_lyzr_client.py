@@ -556,3 +556,27 @@ class TestChatWithAgentKnowledgeBases:
         call_kwargs = mock_agent.run.call_args.kwargs
         assert call_kwargs.get("managed_agents") == managed
         assert call_kwargs.get("knowledge_bases") == [mock_kb]
+
+
+class TestTopicDescriptions:
+    """Tests for TOPIC_DESCRIPTIONS dict in lyzr_client.py."""
+
+    def test_every_taxonomy_topic_has_a_description(self):
+        """Each sub-topic in TOPIC_TAXONOMY must have an entry in TOPIC_DESCRIPTIONS."""
+        from lyzr_client import TOPIC_DESCRIPTIONS, TOPIC_TAXONOMY
+        for sub_topics in TOPIC_TAXONOMY.values():
+            for sub in sub_topics:
+                assert sub in TOPIC_DESCRIPTIONS, f"Missing description for '{sub}'"
+
+    def test_descriptions_are_non_empty_strings(self):
+        """Every description must be a non-empty string of at least 10 characters."""
+        from lyzr_client import TOPIC_DESCRIPTIONS
+        for key, val in TOPIC_DESCRIPTIONS.items():
+            assert isinstance(val, str), f"Description for '{key}' is not a string"
+            assert len(val) >= 10, f"Description for '{key}' is too short"
+
+    def test_descriptions_exported(self):
+        """TOPIC_DESCRIPTIONS can be imported directly from lyzr_client."""
+        import lyzr_client
+        assert hasattr(lyzr_client, "TOPIC_DESCRIPTIONS")
+        assert isinstance(lyzr_client.TOPIC_DESCRIPTIONS, dict)

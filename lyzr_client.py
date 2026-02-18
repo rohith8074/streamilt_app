@@ -30,6 +30,13 @@ TOPIC_TAXONOMY = {
     ]
 }
 
+TOPIC_DESCRIPTIONS = {
+    "Encapsulation": "Bundle data with methods and control access via visibility modifiers.",
+    "Inheritance": "Build class hierarchies that reuse and extend existing behaviour.",
+    "Polymorphism": "One interface, many forms — method overriding and duck typing.",
+    "Abstraction": "Hide complexity behind clean interfaces and abstract contracts.",
+}
+
 TUTOR_AGENT_ID = os.getenv("TUTOR_AGENT_ID") or AGENT_ID
 EVALUATOR_AGENT_ID = os.getenv("EVALUATOR_AGENT_ID")
 
