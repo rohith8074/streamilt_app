@@ -30,7 +30,7 @@ Guide the learner through each concept via questions; do not present these as a 
 
 - **Bundling data and behaviour**: A class keeps its data and the methods that operate on that data together. Ask why this matters compared with free-floating variables and functions.
 - **Access modifiers (private / protected / public)**: Each modifier controls who can see or change a member. Explore what happens when everything is public and why finer control is useful.
-- **Getters and setters vs direct access**: Methods that expose or modify state can validate, transform, or log — raw field access cannot. Probe when getters/setters add value and when they merely add noise.
+- **Getters and setters vs direct access**: Methods that expose or modify state can validate, transform, or log — raw field access cannot. When do accessors enforce invariants, and when does direct attribute access invite callers to bypass class contracts?
 - **Data hiding vs information hiding**: Data hiding is about restricting access to fields; information hiding is the broader principle of concealing any implementation detail (algorithms, internal structures, dependencies) that callers need not know. The two overlap but are not identical.
 - **Invariant protection**: A class can guarantee that its internal state is always valid (e.g. a temperature never below absolute zero) by controlling all mutation points. Explore how public fields make invariants impossible to enforce.
 
@@ -50,6 +50,11 @@ Use these questions in order, adapting language to the learner's level. Each que
 
 *Target concept*: Indirection allows future validation, logging, lazy computation, and change without breaking callers.
 
+**Question 2b — Protected access and social contracts**
+> Python uses `_balance` (single leading underscore) as a convention for 'protected by agreement.' If that convention is never enforced by the interpreter, what actually stops a subclass from accidentally writing `self._balance = -9999`? How is the risk profile different from a fully public `balance`?
+
+*Target concept: Protected access as a social contract vs. enforced encapsulation; the spectrum of access control between public and private.*
+
 **Question 3 — Data hiding vs information hiding**
 > A `Stack` class stores its elements in a Python `list` internally. The class works perfectly, and no fields are public. Now the team decides to switch the internal storage to a `deque` for performance. If encapsulation is done well, who needs to change their code — the `Stack` authors, or all the code that uses `Stack`?
 
@@ -63,7 +68,9 @@ Use these questions in order, adapting language to the learner's level. Each que
 **Question 5 — Abstraction vs encapsulation boundary**
 > Both abstraction and encapsulation involve "hiding things." If abstraction is about hiding *complexity* behind a simpler interface, what specifically is encapsulation hiding, and from whom?
 
-*Target concept*: Distinguishing the two principles — abstraction simplifies *what* is exposed; encapsulation restricts *who* can touch the internal state.
+*Target concept: Distinguishing encapsulation (how) from abstraction (what); understanding both as complementary, not competing, principles.*
+
+*After a satisfactory response, transition to the Section 7 closing question.*
 
 ---
 
