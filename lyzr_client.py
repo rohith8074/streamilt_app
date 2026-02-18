@@ -53,6 +53,8 @@ def create_topic_kb(super_topic: str, sub_topic: str, instruction_content: str):
         KnowledgeBase object on success, None on failure
     """
     prefix = _SUPER_TOPIC_PREFIX.get(super_topic, "oop")
+    if super_topic not in _SUPER_TOPIC_PREFIX:
+        logger.warning(f"Unknown super_topic '{super_topic}'; falling back to prefix 'oop'")
     kb_name = f"{prefix}_{sub_topic.lower()}"
     try:
         client = LyzrClient()
@@ -86,6 +88,8 @@ def get_instruction_file(super_topic: str, sub_topic: str) -> str:
         Relative file path, e.g. "learning_instructions/oop_encapsulation.md"
     """
     prefix = _SUPER_TOPIC_PREFIX.get(super_topic, "oop")
+    if super_topic not in _SUPER_TOPIC_PREFIX:
+        logger.warning(f"Unknown super_topic '{super_topic}'; falling back to prefix 'oop'")
     return f"learning_instructions/{prefix}_{sub_topic.lower()}.md"
 
 

@@ -361,8 +361,8 @@ class TestCreateTopicKb:
         create_topic_kb("OOP (Object-Oriented Programming)", "Encapsulation", content)
 
         mock_kb.add_text.assert_called_once()
-        call_args_str = str(mock_kb.add_text.call_args)
-        assert "Encapsulation instructions" in call_args_str
+        call_kwargs = mock_kb.add_text.call_args.kwargs
+        assert call_kwargs["text"] == content
 
     def test_returns_kb_object(self, mocker):
         from lyzr_client import create_topic_kb
