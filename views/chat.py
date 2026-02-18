@@ -16,6 +16,7 @@ from auth import (  # Importing our database helper functions
     update_user_session,
 )
 from lyzr_client import (
+    TOPIC_DESCRIPTIONS,
     TOPIC_TAXONOMY,
     TUTOR_AGENT_ID,
     chat_with_agent,
@@ -40,23 +41,24 @@ def _reset_session():
 
 
 def _show_topic_selector():
-    """Render the pre-session topic-picker UI."""
+    """Render the pre-session topic-picker UI as a 2-column card grid."""
     st.markdown("#### Select a topic to begin your learning session")
 
-    super_topics = list(TOPIC_TAXONOMY.keys())
-    selected_super = st.selectbox(
-        "Super Topic",
-        super_topics,
-        key="super_topic_select",
-    )
-    selected_sub = st.selectbox(
-        "Sub Topic",
-        TOPIC_TAXONOMY[selected_super],
-        key="sub_topic_select",
-    )
-
-    if st.button("▶ Start Learning Session", type="primary"):
-        _start_session(selected_super, selected_sub)
+    for super_topic, sub_topics in TOPIC_TAXONOMY.items():
+        st.markdown(f"**{super_topic}**")
+        cols = st.columns(2)
+        for i, sub_topic in enumerate(sub_topics):
+            with cols[i % 2]:
+                with st.container(border=True):
+                    st.markdown(f"**{sub_topic}**")
+                    st.caption(TOPIC_DESCRIPTIONS.get(sub_topic, ""))
+                    if st.button(
+                        "▶ Start Learning",
+                        key=f"start_{sub_topic}",
+                        use_container_width=True,
+                        type="primary",
+                    ):
+                        _start_session(super_topic, sub_topic)
 
 
 def _start_session(super_topic: str, sub_topic: str):
