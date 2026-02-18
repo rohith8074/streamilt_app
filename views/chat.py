@@ -189,12 +189,7 @@ def _handle_send(prompt: str):
         "assistant",
         response,
     )
-    with st.chat_message("assistant"):
-        st.markdown(response)
-        st.caption(
-            f"💳 ${credits_this_msg:.4f} used this message  ·  "
-            f"${credits_remaining:.4f} remaining"
-        )
+    st.rerun()
 
 
 def _handle_evaluate():
