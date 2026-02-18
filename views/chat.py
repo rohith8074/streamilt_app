@@ -118,8 +118,8 @@ def _handle_send(prompt: str):
         )
         return
 
-    # C. SNAPSHOT CREDITS BEFORE INFERENCE (for delta calculation after response).
-    credits_before = get_user_credits(st.session_state.username, agent_id=TUTOR_AGENT_ID)
+    # C. SNAPSHOT CREDITS BEFORE INFERENCE (reuse value already fetched in step B).
+    credits_before = user_credits
 
     # D. SHOW USER MESSAGE and persist.
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -186,7 +186,7 @@ def _handle_send(prompt: str):
         sync_user_activity(st.session_state.username, st.session_state.session_id)
 
     credits_after = get_user_credits(st.session_state.username, agent_id=TUTOR_AGENT_ID)
-    user_limit = get_user_limit(st.session_state.username)
+    user_limit = max_limit
     credits_this_msg = max(0.0, credits_after - credits_before)
     credits_remaining = max(0.0, user_limit - credits_after)
 
