@@ -188,10 +188,8 @@ def chat_with_agent(
         # Initialize SDK client
         client = LyzrClient()
 
-        # Get agent instance with structured output model
-        agent = client.studio.agents.get(agent_id, response_model=TutorResponse)
+        agent = client.studio.agents.get(agent_id)
 
-        # Build run parameters
         run_kwargs = {
             "message": message,
             "user_id": user_id,
@@ -204,15 +202,22 @@ def chat_with_agent(
         if knowledge_bases:
             run_kwargs["knowledge_bases"] = knowledge_bases
 
-        response = agent.run(**run_kwargs)
+        raw = agent.run(**run_kwargs)
+        raw_text = raw.response if hasattr(raw, "response") else str(raw)
         logger.info("SDK chat successful for user %s, session %s", user_id, session_id)
-        return response  # TutorResponse instance
+
+        try:
+            data = json.loads(raw_text)
+            return TutorResponse(**data)
+        except Exception:
+            logger.warning("Agent response was not valid JSON — falling back to plain text")
+            return raw_text
 
     except ValueError as ve:
-        logger.error(f"Configuration error: {ve}")
-        return f"Error: Missing Lyzr API Credentials. Please check your settings."
+        logger.error("Configuration error: %s", ve)
+        return "Error: Missing Lyzr API Credentials. Please check your settings."
     except Exception as e:
-        logger.error(f"SDK chat error: {e}")
+        logger.error("SDK chat error: %s", e)
         return f"AI Connection Error: {e}. Please try again."
 
 
@@ -325,13 +330,20 @@ def evaluate_session(messages: list, super_topic: str, sub_topic: str) -> str:
 
     try:
         client = LyzrClient()
-        agent = client.studio.agents.get(EVALUATOR_AGENT_ID, response_model=EvalReport)
-        response = agent.run(
+        agent = client.studio.agents.get(EVALUATOR_AGENT_ID)
+        raw = agent.run(
             message=prompt,
             user_id="evaluator",
             session_id=str(uuid.uuid4()),
         )
-        return response  # EvalReport instance
+        raw_text = raw.response if hasattr(raw, "response") else str(raw)
+
+        try:
+            data = json.loads(raw_text)
+            return EvalReport(**data)
+        except Exception:
+            logger.warning("Evaluator response was not valid JSON — returning plain text")
+            return raw_text
     except Exception as e:
         logger.error("Session evaluation failed: %s", e)
         return f"Evaluation failed: {e}"

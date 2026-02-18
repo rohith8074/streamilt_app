@@ -94,17 +94,18 @@ class TestChatWithAgent:
     """Tests for chat_with_agent function using SDK."""
 
     def test_chat_with_agent_basic(self, mocker):
-        """Test chat_with_agent returns TutorResponse from SDK."""
+        """Test chat_with_agent returns TutorResponse parsed from JSON SDK response."""
+        import json
         from lyzr_client import chat_with_agent
         from models import TutorResponse
 
         mock_agent = MagicMock()
-        mock_agent.run.return_value = TutorResponse(
-            response_text="What do you think encapsulation means?",
-            tone_up="Can you explain access modifiers?",
-            tone_down="Think of a TV remote — what is hidden?",
-            next_nudge="Why hide internal state at all?",
-        )
+        mock_agent.run.return_value = MagicMock(response=json.dumps({
+            "response_text": "What do you think encapsulation means?",
+            "tone_up": "Can you explain access modifiers?",
+            "tone_down": "Think of a TV remote — what is hidden?",
+            "next_nudge": "Why hide internal state at all?",
+        }))
 
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
@@ -144,16 +145,17 @@ class TestChatWithAgent:
 
     def test_chat_with_agent_with_managed_agents(self, mocker):
         """Test chat_with_agent passes managed_agents via kwargs."""
+        import json
         from lyzr_client import chat_with_agent
         from models import TutorResponse
 
         mock_agent = MagicMock()
-        mock_agent.run.return_value = TutorResponse(
-            response_text="Routed response",
-            tone_up="go deeper",
-            tone_down="simplify",
-            next_nudge="next concept",
-        )
+        mock_agent.run.return_value = MagicMock(response=json.dumps({
+            "response_text": "Routed response",
+            "tone_up": "go deeper",
+            "tone_down": "simplify",
+            "next_nudge": "next concept",
+        }))
 
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
@@ -467,17 +469,19 @@ class TestEvaluateSession:
         assert "Inheritance" in call_kwargs["message"]
 
     def test_returns_eval_report_on_success(self, mocker):
+        import json
         from lyzr_client import evaluate_session
         from models import EvalReport, Metric
 
         mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
         mock_agent = MagicMock()
-        m = Metric(score=4, explanation="Good.")
-        expected = EvalReport(
-            engagement=m, clarity=m, guidance=m, encouragement=m,
-            real_world_connection=m, conversational_flow=m, learning_progression=m,
-        )
-        mock_agent.run.return_value = expected
+        metric_data = {"score": 4, "explanation": "Good."}
+        mock_agent.run.return_value = MagicMock(response=json.dumps({
+            "engagement": metric_data, "clarity": metric_data,
+            "guidance": metric_data, "encouragement": metric_data,
+            "real_world_connection": metric_data, "conversational_flow": metric_data,
+            "learning_progression": metric_data,
+        }))
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
         mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
