@@ -1,7 +1,10 @@
 # --- 1. SETUP AND TOOLS ---
 import json  # For handling complex data structures
+import logging
 import uuid  # For creating unique session IDs
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 import streamlit as st  # For the website interface
 
@@ -113,12 +116,6 @@ def _handle_send(prompt: str):
         )
         return
 
-    # C. SESSION SETUP: Ensure a valid session ID exists.
-    if not st.session_state.session_id:
-        st.session_state.session_id = str(uuid.uuid4())
-        if st.session_state.get("username"):
-            update_user_session(st.session_state.username, st.session_state.session_id)
-
     # D. SHOW USER MESSAGE and persist.
     st.session_state.messages.append({"role": "user", "content": prompt})
     save_chat_message(
@@ -133,8 +130,8 @@ def _handle_send(prompt: str):
     # E. CALL TUTOR AGENT.
     kb = st.session_state.get("learning_kb")
     with st.spinner("Thinking…"):
-        print(f"\n[USER QUERY]: {prompt}")
-        print(f"[SESSION ID]: {st.session_state.session_id}")
+        logger.info("[USER QUERY]: %s", prompt)
+        logger.info("[SESSION ID]: %s", st.session_state.session_id)
 
         api_data = chat_with_agent(
             message=prompt,
@@ -144,9 +141,9 @@ def _handle_send(prompt: str):
             knowledge_bases=[kb] if kb is not None else None,
         )
 
-        print(
-            f"[AGENT RESPONSE]: "
-            f"{json.dumps(api_data, indent=2) if isinstance(api_data, dict) else api_data}"
+        logger.info(
+            "[AGENT RESPONSE]: %s",
+            json.dumps(api_data, indent=2) if isinstance(api_data, dict) else api_data,
         )
 
     # F. PARSE RESPONSE.
