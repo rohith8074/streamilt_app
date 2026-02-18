@@ -118,6 +118,9 @@ def _handle_send(prompt: str):
         )
         return
 
+    # C. SNAPSHOT CREDITS BEFORE INFERENCE (for delta calculation after response).
+    credits_before = get_user_credits(st.session_state.username, agent_id=TUTOR_AGENT_ID)
+
     # D. SHOW USER MESSAGE and persist.
     st.session_state.messages.append({"role": "user", "content": prompt})
     save_chat_message(
@@ -178,8 +181,22 @@ def _handle_send(prompt: str):
     else:
         response = api_data  # Error string from SDK wrapper
 
-    # H. SHOW AND SAVE ASSISTANT RESPONSE.
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    # H. POST-INFERENCE SYNC: capture the new trace so credit delta is accurate.
+    with st.spinner("Updating credit usage…"):
+        sync_user_activity(st.session_state.username, st.session_state.session_id)
+
+    credits_after = get_user_credits(st.session_state.username, agent_id=TUTOR_AGENT_ID)
+    user_limit = get_user_limit(st.session_state.username)
+    credits_this_msg = max(0.0, credits_after - credits_before)
+    credits_remaining = max(0.0, user_limit - credits_after)
+
+    # I. SHOW AND SAVE ASSISTANT RESPONSE (with credit metadata on the dict).
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": response,
+        "credits_used": credits_this_msg,
+        "credits_remaining": credits_remaining,
+    })
     save_chat_message(
         st.session_state.username,
         st.session_state.session_id,
@@ -188,6 +205,10 @@ def _handle_send(prompt: str):
     )
     with st.chat_message("assistant"):
         st.markdown(response)
+        st.caption(
+            f"💳 ${credits_this_msg:.4f} used this message  ·  "
+            f"${credits_remaining:.4f} remaining"
+        )
 
 
 def _handle_evaluate():
