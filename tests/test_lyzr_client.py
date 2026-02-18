@@ -489,3 +489,70 @@ class TestEvaluateSession:
 
         result = evaluate_session([], "OOP (Object-Oriented Programming)", "Encapsulation")
         assert "failed" in result.lower() or "Error" in result
+
+
+class TestChatWithAgentKnowledgeBases:
+    """Tests for knowledge_bases parameter in chat_with_agent()."""
+
+    def test_passes_knowledge_bases_to_agent_run(self, mocker):
+        from lyzr_client import chat_with_agent
+
+        mock_kb = MagicMock()
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="RAG-powered response")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "test-agent-id")
+
+        chat_with_agent(
+            message="What is encapsulation?",
+            user_id="user@test.com",
+            session_id="session-abc",
+            knowledge_bases=[mock_kb],
+        )
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "knowledge_bases" in call_kwargs
+        assert call_kwargs["knowledge_bases"] == [mock_kb]
+
+    def test_knowledge_bases_omitted_when_none(self, mocker):
+        """knowledge_bases must NOT appear in agent.run() kwargs when not provided."""
+        from lyzr_client import chat_with_agent
+
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="response")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "test-agent-id")
+
+        chat_with_agent(message="Hello", user_id="u@t.com", session_id="s-123")
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "knowledge_bases" not in call_kwargs
+
+    def test_managed_agents_and_knowledge_bases_work_together(self, mocker):
+        """Passing both managed_agents and knowledge_bases should work."""
+        from lyzr_client import chat_with_agent
+
+        mock_kb = MagicMock()
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="routed rag response")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+        mocker.patch("lyzr_client.AGENT_ID", "mgr-agent")
+
+        managed = [{"id": "spec-1", "name": "Spec"}]
+        chat_with_agent(
+            message="test",
+            user_id="u@t.com",
+            session_id="s-123",
+            managed_agents=managed,
+            knowledge_bases=[mock_kb],
+        )
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert call_kwargs.get("managed_agents") == managed
+        assert call_kwargs.get("knowledge_bases") == [mock_kb]

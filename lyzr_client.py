@@ -151,7 +151,8 @@ def chat_with_agent(
     user_id: str,
     session_id: str,
     agent_id: str = None,
-    managed_agents: list = None
+    managed_agents: list = None,
+    knowledge_bases: list = None,
 ):
     """
     Send a chat message using lyzr-adk SDK.
@@ -162,6 +163,7 @@ def chat_with_agent(
         session_id: Session UUID string
         agent_id: Agent ID (defaults to AGENT_ID env var)
         managed_agents: List of specialist agents for routing
+        knowledge_bases: Optional list of KnowledgeBase objects for RAG context
 
     Returns:
         dict: Response with 'response' key, or error string
@@ -191,6 +193,10 @@ def chat_with_agent(
         # Add managed_agents if provided (for manager agent routing)
         if managed_agents:
             run_kwargs["managed_agents"] = managed_agents
+
+        # Add knowledge_bases if provided (for RAG-powered tutoring sessions)
+        if knowledge_bases:
+            run_kwargs["knowledge_bases"] = knowledge_bases
 
         # Execute chat using SDK
         response = agent.run(**run_kwargs)
