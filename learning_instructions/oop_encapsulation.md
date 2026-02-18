@@ -77,8 +77,8 @@ Watch for these and address them through targeted questions, not corrections.
 2. **"Private means secure — external code can never access it."**
    Probe with: "If I told you that Python's `__name_mangling` can be bypassed with `obj._ClassName__field`, or that Java's reflection API can access private fields at runtime, does that change your definition of what 'private' actually guarantees?"
 
-3. **"Adding getters and setters for every field is always the right approach — it automatically gives you encapsulation."**
-   Probe with: "If a class has a private `_balance` field but provides `get_balance()` and `set_balance(value)` where `set_balance` does no validation, how is the caller's experience different from just making `balance` public?"
+3. **"Getters and setters always break encapsulation — truly encapsulated classes expose no accessors at all."**
+   Probe with: "If getters always break encapsulation, how would you design a read-only `BankAccount.balance` property that other objects can safely display? Would refusing to provide any accessor at all actually protect the invariant better, or would it just make the class unusable?"
 
 4. **"Python name-mangling (`__field`) provides true privacy equivalent to Java's `private`."**
    Probe with: "If name-mangling is Python's equivalent of `private`, why can I still write `account._BankAccount__balance = -9999` and it works without error? What does that tell you about what name-mangling actually enforces?"
