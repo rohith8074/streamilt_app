@@ -214,6 +214,30 @@ def _handle_evaluate():
     st.rerun()
 
 
+def _render_eval_report(report):
+    """Render a structured EvalReport as a 7-row metric table."""
+    metrics = [
+        ("Engagement",           report.engagement),
+        ("Clarity",              report.clarity),
+        ("Guidance",             report.guidance),
+        ("Encouragement",        report.encouragement),
+        ("Real-world Connect.",  report.real_world_connection),
+        ("Conversational Flow",  report.conversational_flow),
+        ("Learning Progression", report.learning_progression),
+    ]
+    for name, metric in metrics:
+        col_name, col_score, col_bar, col_explain = st.columns([2, 0.6, 1.5, 5])
+        with col_name:
+            st.markdown(f"**{name}**")
+        with col_score:
+            st.markdown(f"**{metric.score}/5**")
+        with col_bar:
+            filled = "█" * metric.score + "░" * (5 - metric.score)
+            st.markdown(f"`{filled}`")
+        with col_explain:
+            st.caption(metric.explanation)
+
+
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
@@ -286,8 +310,12 @@ def show_chat_view():
 
     # --- EVALUATION REPORT ---
     if st.session_state.get("evaluation_result"):
+        report = st.session_state.evaluation_result
         with st.expander("Session Evaluation Report", expanded=True):
-            st.markdown(st.session_state.evaluation_result)
+            if isinstance(report, EvalReport):
+                _render_eval_report(report)
+            else:
+                st.markdown(str(report))  # Fallback for error strings
 
     # --- CHAT INPUT (native sticky bottom) ---
     if prompt := st.chat_input("Ask a question or share your thoughts…"):
