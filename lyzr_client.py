@@ -361,5 +361,4 @@ Metrics to evaluate:
 
 
 # --- LEGACY FUNCTIONS REMOVED ---
-# Old requests-based chat_with_agent() and get_traces() functions have been removed.
-# Use chat_with_agent_sdk() and get_traces_sdk() instead (see above).
+# Old requests-based implementations have been replaced with SDK-based versions above.

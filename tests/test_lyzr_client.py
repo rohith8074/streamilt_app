@@ -30,11 +30,6 @@ class TestGetActiveApiKey:
         assert get_active_api_key() == "sk-real-key-123"
 
 
-# Old TestChatWithAgent and TestGetTraces classes removed
-# Legacy functions have been replaced with SDK-based implementations
-# See TestChatWithAgent and TestGetTraces below
-
-
 class TestLyzrSDKImport:
     """Tests for lyzr-adk SDK availability."""
 

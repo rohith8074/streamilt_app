@@ -24,6 +24,7 @@ from lyzr_client import (
     evaluate_session,
     get_instruction_file,
 )
+from utils.sync import sync_user_activity
 
 
 # ---------------------------------------------------------------------------
@@ -102,8 +103,6 @@ def _start_session(super_topic: str, sub_topic: str):
 def _handle_send(prompt: str):
     """Validate credits, send message to tutor agent, save to DB."""
     # A. AUTOMATIC SYNC: Refresh usage before the credit check.
-    from utils.sync import sync_user_activity
-
     with st.spinner("Verifying your remaining credits…"):
         sync_user_activity(st.session_state.username, st.session_state.session_id)
 
@@ -186,9 +185,8 @@ def _handle_send(prompt: str):
         sync_user_activity(st.session_state.username, st.session_state.session_id)
 
     credits_after = get_user_credits(st.session_state.username, agent_id=TUTOR_AGENT_ID)
-    user_limit = max_limit
     credits_this_msg = max(0.0, credits_after - credits_before)
-    credits_remaining = max(0.0, user_limit - credits_after)
+    credits_remaining = max(0.0, max_limit - credits_after)
 
     # I. SHOW AND SAVE ASSISTANT RESPONSE (with credit metadata on the dict).
     st.session_state.messages.append({
