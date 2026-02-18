@@ -2,6 +2,7 @@
 import json  # For handling complex data formats
 import logging
 import os  # Used to read secret keys and system settings
+import uuid
 
 import requests  # The tool that allows our app to talk to other computers over the internet
 import streamlit as st
@@ -333,13 +334,12 @@ Metrics to evaluate:
 """
 
     try:
-        import uuid as _uuid
         client = LyzrClient()
         agent = client.studio.agents.get(EVALUATOR_AGENT_ID)
         response = agent.run(
             message=prompt,
             user_id="evaluator",
-            session_id=str(_uuid.uuid4()),
+            session_id=str(uuid.uuid4()),
         )
         return response.response if hasattr(response, "response") else str(response)
     except Exception as e:
