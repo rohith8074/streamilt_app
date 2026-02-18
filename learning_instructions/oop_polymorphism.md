@@ -78,7 +78,12 @@ Watch for these and address them through targeted questions, not corrections.
    Probe with: "You described polymorphism as having multiple methods with the same name but different parameters. If that is the whole story, how would you explain what happens when Python calls `speak()` on a variable that holds either a `Dog` or a `Cat` object — since there is only one `speak()` signature being called?"
 
 2. **"Python doesn't really have polymorphism because it has no `interface` keyword."**
-   Probe with: "You said Python lacks polymorphism because there is no `interface` keyword. If I write a function `make_it_speak(animal)` and pass in a `Dog`, then a `Cat`, then a `Parrot` — each with their own `speak()` method — and it works without any shared base class, what name would you give to what just happened?"
+   Probe with: "You said polymorphism requires the `interface` keyword. I just called
+`speak()` on a `Dog`, a `Cat`, and a `Parrot` with no interface declaration and it
+worked. If that's polymorphism — which it is — what does that tell you about whether
+the `interface` keyword is part of the *definition* of polymorphism, or just one
+mechanism for achieving it? What is the definition itself, stripped of any
+language-specific syntax?"
 
 3. **"Polymorphism and inheritance are the same thing — you need inheritance to have polymorphism."**
    Probe with: "You said polymorphism requires inheritance. Consider Python's duck typing: two completely unrelated classes, `FileLogger` and `DatabaseLogger`, both have a `log(message)` method. A function accepts either and calls `log()` on it — no common base class. Is that polymorphism? If yes, does inheritance seem necessary?"

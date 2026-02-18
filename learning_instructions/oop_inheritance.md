@@ -50,15 +50,38 @@ Use these questions in order, adapting language to the learner's level. Each que
 
 *Target concept: The Liskov Substitution Principle; subclasses that violate the parent's behavioural contract break callers that depend on the parent type.*
 
-**Question 3 — Composition as an alternative**
-> An `ElectricCar` needs an `Engine` (of a specific electric type) and is also a kind of `Car`. A colleague proposes two designs: (A) `ElectricEngine extends Car`, or (B) `ElectricCar extends Car` and holds an `ElectricEngine` as a field. Which passes the "is-a" test, which passes the "has-a" test, and what breaks in the design that fails its test?
+**Question 2b — What does `super()` actually resolve to?**
+> You have `class C(A, B)` where both `A` and `B` extend `Base` and each defines
+> `__init__`. Inside `C.__init__`, you call `super().__init__()`. Which class's
+> `__init__` runs first — and why is that not necessarily `A`? If you skip the
+> `super()` call entirely, what guarantee from the parent class might silently stop
+> being upheld?
 
-*Target concept: Choosing between inheritance ("is-a") and composition ("has-a"); recognising when composition is more appropriate.*
+*Target concept: Python's Method Resolution Order (MRO); why `super()` is cooperative rather than "call my immediate parent"; what silently breaks when a subclass omits `super()` in an override.*
+
+**Question 3 — Choosing between inheritance and composition**
+> A colleague proposes two designs. **Design A:** `ElectricCar` inherits from both
+> `Car` and `ElectricEngine`. **Design B:** `ElectricCar` inherits from `Car` and
+> holds an `ElectricEngine` as a private field. Apply the "is-a" test to each
+> inheritance link in Design A. Which link fails it — and what relationship does
+> that link actually describe? How does Design B express that relationship instead?
+
+*Target concept: The "is-a" test as the criterion for inheritance; composition as the correct way to model "has-a" relationships; why mixing them in a single inheritance chain creates conceptually wrong models.*
 
 **Question 4 — LSP violation with a concrete method**
 > `class Bird` has a `fly()` method. `class Penguin(Bird)` inherits it but penguins cannot fly. If a function iterates over a list of `Bird` objects and calls `fly()` on each, what happens when a `Penguin` is in the list? What does that tell you about whether `Penguin` should extend `Bird`?
 
 *Target concept: LSP in practice; a subclass that cannot fulfil an inherited method's contract signals a broken hierarchy.*
+
+**Question 4b — Fragile base class and hierarchy depth**
+> A `Vehicle` base class stores speed as a private integer. `Car(Vehicle)` and
+> `ElectricCar(Car)` both depend on that field indirectly through method calls.
+> The `Vehicle` author changes speed from an integer to a float for precision.
+> Which classes in the hierarchy might break — and which ones would the author
+> not even know about? What does this tell you about the risk of inheritance
+> hierarchies that go three or more levels deep?
+
+*Target concept: The fragile base class problem; how deep hierarchies entangle subclasses with ancestor implementation details; why shallow hierarchies (1-2 levels) are generally preferred.*
 
 **Question 5 — Designing and justifying a hierarchy**
 > Sketch a two-level class hierarchy for a school system — choose three or four classes and draw the arrows. For each "is-a" link you draw, state one concrete reason why the subclass truly satisfies the "is-a" test rather than merely sharing some code with the parent.
