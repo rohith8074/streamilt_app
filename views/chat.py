@@ -249,14 +249,40 @@ def show_chat_view():
     st.divider()
 
     # Display conversation history
-    for msg in messages:
+    last_idx = len(messages) - 1
+    for i, msg in enumerate(messages):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-            if msg["role"] == "assistant" and "credits_used" in msg:
-                st.caption(
-                    f"💳 ${msg['credits_used']:.4f} used this message  ·  "
-                    f"${msg['credits_remaining']:.4f} remaining"
-                )
+            if msg["role"] == "assistant":
+                if "credits_used" in msg:
+                    st.caption(
+                        f"💳 ${msg['credits_used']:.4f} used this message  ·  "
+                        f"${msg['credits_remaining']:.4f} remaining"
+                    )
+                # Suggestion chips — only on the last assistant message
+                if i == last_idx and msg.get("tone_up"):
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        if st.button(
+                            "⬆ Go deeper",
+                            key="chip_tone_up",
+                            use_container_width=True,
+                        ):
+                            _handle_send(msg["tone_up"])
+                    with c2:
+                        if st.button(
+                            "⬇ Simplify",
+                            key="chip_tone_down",
+                            use_container_width=True,
+                        ):
+                            _handle_send(msg["tone_down"])
+                    with c3:
+                        if st.button(
+                            "➡ Next question",
+                            key="chip_next_nudge",
+                            use_container_width=True,
+                        ):
+                            _handle_send(msg["next_nudge"])
 
     # --- EVALUATION REPORT ---
     if st.session_state.get("evaluation_result"):
