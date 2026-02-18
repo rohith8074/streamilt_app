@@ -19,6 +19,33 @@ AGENT_ID = os.getenv("AGENT_ID")
 LYZR_API_KEY = os.getenv("LYZR_API_KEY")
 LYZR_BASE_URL = os.getenv("LYZR_BASE_URL", "https://api.lyzr.app")
 
+# --- TOPIC TAXONOMY ---
+TOPIC_TAXONOMY = {
+    "OOP (Object-Oriented Programming)": [
+        "Encapsulation",
+        "Inheritance",
+        "Polymorphism",
+        "Abstraction",
+    ]
+}
+
+TUTOR_AGENT_ID = os.getenv("TUTOR_AGENT_ID") or AGENT_ID
+EVALUATOR_AGENT_ID = os.getenv("EVALUATOR_AGENT_ID")
+
+
+def get_instruction_file(super_topic: str, sub_topic: str) -> str:
+    """Return the path to the markdown instruction file for a topic.
+
+    Args:
+        super_topic: e.g. "OOP (Object-Oriented Programming)"
+        sub_topic: e.g. "Encapsulation"
+
+    Returns:
+        Relative file path, e.g. "learning_instructions/oop_encapsulation.md"
+    """
+    prefix = "oop"  # Only OOP supported; extend here for future super-topics
+    return f"learning_instructions/{prefix}_{sub_topic.lower()}.md"
+
 
 # --- SDK WRAPPER CLASS ---
 class LyzrClient:

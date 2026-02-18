@@ -262,3 +262,50 @@ class TestGetTraces:
 
         result = get_traces()
         assert result == []
+
+
+class TestTopicTaxonomy:
+    """Tests for TOPIC_TAXONOMY constant."""
+
+    def test_oop_super_topic_exists(self):
+        from lyzr_client import TOPIC_TAXONOMY
+        assert "OOP (Object-Oriented Programming)" in TOPIC_TAXONOMY
+
+    def test_oop_has_four_subtopics(self):
+        from lyzr_client import TOPIC_TAXONOMY
+        subtopics = TOPIC_TAXONOMY["OOP (Object-Oriented Programming)"]
+        assert set(subtopics) == {"Encapsulation", "Inheritance", "Polymorphism", "Abstraction"}
+
+    def test_tutor_and_evaluator_agent_ids_defined(self):
+        import lyzr_client
+        assert hasattr(lyzr_client, "TUTOR_AGENT_ID")
+        assert hasattr(lyzr_client, "EVALUATOR_AGENT_ID")
+
+
+class TestGetInstructionFile:
+    """Tests for get_instruction_file() helper."""
+
+    def test_encapsulation_returns_correct_path(self):
+        from lyzr_client import get_instruction_file
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "Encapsulation")
+        assert result == "learning_instructions/oop_encapsulation.md"
+
+    def test_inheritance_returns_correct_path(self):
+        from lyzr_client import get_instruction_file
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "Inheritance")
+        assert result == "learning_instructions/oop_inheritance.md"
+
+    def test_polymorphism_returns_correct_path(self):
+        from lyzr_client import get_instruction_file
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "Polymorphism")
+        assert result == "learning_instructions/oop_polymorphism.md"
+
+    def test_abstraction_returns_correct_path(self):
+        from lyzr_client import get_instruction_file
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "Abstraction")
+        assert result == "learning_instructions/oop_abstraction.md"
+
+    def test_sub_topic_is_lowercased(self):
+        from lyzr_client import get_instruction_file
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "POLYMORPHISM")
+        assert result == "learning_instructions/oop_polymorphism.md"
