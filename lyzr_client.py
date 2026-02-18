@@ -8,6 +8,7 @@ import requests  # The tool that allows our app to talk to other computers over 
 import streamlit as st
 from dotenv import load_dotenv  # Loads our 'Secret File' (.env) containing API keys
 from lyzr import Studio
+from models import EvalReport, TutorResponse
 
 # Load the secret keys from the .env file immediately
 load_dotenv(override=True)
@@ -187,34 +188,25 @@ def chat_with_agent(
         # Initialize SDK client
         client = LyzrClient()
 
-        # Get agent instance from agent_id
-        agent = client.studio.agents.get(agent_id)
+        # Get agent instance with structured output model
+        agent = client.studio.agents.get(agent_id, response_model=TutorResponse)
 
         # Build run parameters
         run_kwargs = {
             "message": message,
             "user_id": user_id,
-            "session_id": session_id
+            "session_id": session_id,
         }
 
-        # Add managed_agents if provided (for manager agent routing)
         if managed_agents:
             run_kwargs["managed_agents"] = managed_agents
 
-        # Add knowledge_bases if provided (for RAG-powered tutoring sessions)
         if knowledge_bases:
             run_kwargs["knowledge_bases"] = knowledge_bases
 
-        # Execute chat using SDK
         response = agent.run(**run_kwargs)
-
-        # Convert AgentResponse to dict format matching old API
-        result = {
-            "response": response.response if hasattr(response, 'response') else str(response)
-        }
-
-        logger.info(f"SDK chat successful for user {user_id}, session {session_id}")
-        return result
+        logger.info("SDK chat successful for user %s, session %s", user_id, session_id)
+        return response  # TutorResponse instance
 
     except ValueError as ve:
         logger.error(f"Configuration error: {ve}")
@@ -326,37 +318,22 @@ def evaluate_session(messages: list, super_topic: str, sub_topic: str) -> str:
         transcript_lines.append(f"{label}: {msg['content']}")
     transcript = "\n".join(transcript_lines) if transcript_lines else "(No messages exchanged.)"
 
-    prompt = f"""You are evaluating a tutoring session on the topic: {super_topic} > {sub_topic}.
-
-TRANSCRIPT:
-{transcript}
-
-Please evaluate this session across the following 7 metrics.
-For each metric, provide a score out of 5 and a one-sentence explanation.
-Use this exact format for each metric:
-**MetricName: X/5** — [one-sentence explanation]
-
-Metrics to evaluate:
-1. Engagement
-2. Clarity
-3. Guidance
-4. Encouragement
-5. Real-world Connection
-6. Conversational Flow
-7. Learning Progression
-"""
+    prompt = (
+        f"Evaluate this tutoring session on {super_topic} > {sub_topic}.\n\n"
+        f"TRANSCRIPT:\n{transcript}"
+    )
 
     try:
         client = LyzrClient()
-        agent = client.studio.agents.get(EVALUATOR_AGENT_ID)
+        agent = client.studio.agents.get(EVALUATOR_AGENT_ID, response_model=EvalReport)
         response = agent.run(
             message=prompt,
             user_id="evaluator",
             session_id=str(uuid.uuid4()),
         )
-        return response.response if hasattr(response, "response") else str(response)
+        return response  # EvalReport instance
     except Exception as e:
-        logger.error(f"Session evaluation failed: {e}")
+        logger.error("Session evaluation failed: %s", e)
         return f"Evaluation failed: {e}"
 
 

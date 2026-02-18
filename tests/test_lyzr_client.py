@@ -94,18 +94,21 @@ class TestChatWithAgent:
     """Tests for chat_with_agent function using SDK."""
 
     def test_chat_with_agent_basic(self, mocker):
-        """Test chat_with_agent uses SDK's agent.run() method."""
+        """Test chat_with_agent returns TutorResponse from SDK."""
         from lyzr_client import chat_with_agent
+        from models import TutorResponse
 
-        # Mock the Agent instance and its run method
         mock_agent = MagicMock()
-        mock_agent.run.return_value = MagicMock(response="Test SDK response")
+        mock_agent.run.return_value = TutorResponse(
+            response_text="What do you think encapsulation means?",
+            tone_up="Can you explain access modifiers?",
+            tone_down="Think of a TV remote — what is hidden?",
+            next_nudge="Why hide internal state at all?",
+        )
 
-        # Mock studio.agents.get to return our mock agent
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
 
-        # Mock LyzrClient to return our mock client
         mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
         mocker.patch("lyzr_client.AGENT_ID", "test-agent-123")
         mocker.patch("lyzr_client.get_active_api_key", return_value="test-key")
@@ -116,8 +119,8 @@ class TestChatWithAgent:
             session_id="session-123"
         )
 
-        assert "response" in result
-        assert result["response"] == "Test SDK response"
+        assert isinstance(result, TutorResponse)
+        assert result.response_text == "What do you think encapsulation means?"
         mock_agent.run.assert_called_once_with(
             message="Hello SDK",
             user_id="user@test.com",
@@ -142,9 +145,15 @@ class TestChatWithAgent:
     def test_chat_with_agent_with_managed_agents(self, mocker):
         """Test chat_with_agent passes managed_agents via kwargs."""
         from lyzr_client import chat_with_agent
+        from models import TutorResponse
 
         mock_agent = MagicMock()
-        mock_agent.run.return_value = MagicMock(response="Routed response")
+        mock_agent.run.return_value = TutorResponse(
+            response_text="Routed response",
+            tone_up="go deeper",
+            tone_down="simplify",
+            next_nudge="next concept",
+        )
 
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
@@ -457,12 +466,18 @@ class TestEvaluateSession:
         call_kwargs = mock_agent.run.call_args.kwargs
         assert "Inheritance" in call_kwargs["message"]
 
-    def test_returns_agent_response_string(self, mocker):
+    def test_returns_eval_report_on_success(self, mocker):
         from lyzr_client import evaluate_session
+        from models import EvalReport, Metric
 
         mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
         mock_agent = MagicMock()
-        mock_agent.run.return_value = MagicMock(response="**Engagement: 4/5** - Good questions asked.")
+        m = Metric(score=4, explanation="Good.")
+        expected = EvalReport(
+            engagement=m, clarity=m, guidance=m, encouragement=m,
+            real_world_connection=m, conversational_flow=m, learning_progression=m,
+        )
+        mock_agent.run.return_value = expected
         mock_client = MagicMock()
         mock_client.studio.agents.get.return_value = mock_agent
         mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
@@ -472,7 +487,8 @@ class TestEvaluateSession:
             "OOP (Object-Oriented Programming)",
             "Encapsulation",
         )
-        assert result == "**Engagement: 4/5** - Good questions asked."
+        assert isinstance(result, EvalReport)
+        assert result.engagement.score == 4
 
     def test_handles_sdk_error_gracefully(self, mocker):
         from lyzr_client import evaluate_session
