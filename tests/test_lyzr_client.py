@@ -276,10 +276,22 @@ class TestTopicTaxonomy:
         subtopics = TOPIC_TAXONOMY["OOP (Object-Oriented Programming)"]
         assert set(subtopics) == {"Encapsulation", "Inheritance", "Polymorphism", "Abstraction"}
 
+
+class TestAgentIdConstants:
+    """Tests for TUTOR_AGENT_ID and EVALUATOR_AGENT_ID module constants."""
+
     def test_tutor_and_evaluator_agent_ids_defined(self):
         import lyzr_client
         assert hasattr(lyzr_client, "TUTOR_AGENT_ID")
         assert hasattr(lyzr_client, "EVALUATOR_AGENT_ID")
+
+    def test_tutor_agent_id_fallback_expression(self):
+        """Verify that TUTOR_AGENT_ID uses the or-AGENT_ID fallback pattern."""
+        import lyzr_client, inspect, textwrap
+        # Read the source and confirm the fallback is in the module
+        source = inspect.getsource(lyzr_client)
+        assert "TUTOR_AGENT_ID = os.getenv" in source
+        assert "or AGENT_ID" in source
 
 
 class TestGetInstructionFile:
@@ -309,3 +321,12 @@ class TestGetInstructionFile:
         from lyzr_client import get_instruction_file
         result = get_instruction_file("OOP (Object-Oriented Programming)", "POLYMORPHISM")
         assert result == "learning_instructions/oop_polymorphism.md"
+
+    def test_uses_prefix_from_super_topic_lookup(self):
+        from lyzr_client import get_instruction_file, _SUPER_TOPIC_PREFIX
+        # Verify the lookup dict exists and has the OOP entry
+        assert "OOP (Object-Oriented Programming)" in _SUPER_TOPIC_PREFIX
+        assert _SUPER_TOPIC_PREFIX["OOP (Object-Oriented Programming)"] == "oop"
+        # Verify function output uses the prefix
+        result = get_instruction_file("OOP (Object-Oriented Programming)", "Encapsulation")
+        assert result.startswith("learning_instructions/oop_")

@@ -33,8 +33,17 @@ TUTOR_AGENT_ID = os.getenv("TUTOR_AGENT_ID") or AGENT_ID
 EVALUATOR_AGENT_ID = os.getenv("EVALUATOR_AGENT_ID")
 
 
+_SUPER_TOPIC_PREFIX = {
+    "OOP (Object-Oriented Programming)": "oop",
+}
+
+
 def get_instruction_file(super_topic: str, sub_topic: str) -> str:
     """Return the path to the markdown instruction file for a topic.
+
+    The file-path prefix is resolved via the ``_SUPER_TOPIC_PREFIX`` mapping.
+    To support a new super-topic, add an entry there; no changes to this
+    function are needed.
 
     Args:
         super_topic: e.g. "OOP (Object-Oriented Programming)"
@@ -43,7 +52,7 @@ def get_instruction_file(super_topic: str, sub_topic: str) -> str:
     Returns:
         Relative file path, e.g. "learning_instructions/oop_encapsulation.md"
     """
-    prefix = "oop"  # Only OOP supported; extend here for future super-topics
+    prefix = _SUPER_TOPIC_PREFIX.get(super_topic, "oop")
     return f"learning_instructions/{prefix}_{sub_topic.lower()}.md"
 
 
