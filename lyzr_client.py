@@ -287,6 +287,66 @@ def get_traces(
         return []
 
 
+# --- SESSION EVALUATION FUNCTION ---
+def evaluate_session(messages: list, super_topic: str, sub_topic: str) -> str:
+    """Evaluate a completed tutoring session using the evaluator agent.
+
+    Formats the conversation as a Student/Tutor transcript and calls the
+    evaluator agent to produce a structured 7-metric report.
+
+    Args:
+        messages: List of {"role": "user"|"assistant", "content": str} dicts
+        super_topic: e.g. "OOP (Object-Oriented Programming)"
+        sub_topic: e.g. "Encapsulation"
+
+    Returns:
+        Evaluation report string, or an error message string on failure
+    """
+    if not EVALUATOR_AGENT_ID:
+        return "Error: EVALUATOR_AGENT_ID is not configured. Set it in Settings or .env."
+
+    # Format conversation as readable transcript
+    transcript_lines = []
+    for msg in messages:
+        label = "Student" if msg["role"] == "user" else "Tutor"
+        transcript_lines.append(f"{label}: {msg['content']}")
+    transcript = "\n".join(transcript_lines) if transcript_lines else "(No messages exchanged.)"
+
+    prompt = f"""You are evaluating a tutoring session on the topic: {super_topic} > {sub_topic}.
+
+TRANSCRIPT:
+{transcript}
+
+Please evaluate this session across the following 7 metrics.
+For each metric, provide a score out of 5 and a one-sentence explanation.
+Use this exact format for each metric:
+**MetricName: X/5** — [one-sentence explanation]
+
+Metrics to evaluate:
+1. Engagement
+2. Clarity
+3. Guidance
+4. Encouragement
+5. Real-world Connection
+6. Conversational Flow
+7. Learning Progression
+"""
+
+    try:
+        import uuid as _uuid
+        client = LyzrClient()
+        agent = client.studio.agents.get(EVALUATOR_AGENT_ID)
+        response = agent.run(
+            message=prompt,
+            user_id="evaluator",
+            session_id=str(_uuid.uuid4()),
+        )
+        return response.response if hasattr(response, "response") else str(response)
+    except Exception as e:
+        logger.error(f"Session evaluation failed: {e}")
+        return f"Evaluation failed: {e}"
+
+
 # --- LEGACY FUNCTIONS REMOVED ---
 # Old requests-based chat_with_agent() and get_traces() functions have been removed.
 # Use chat_with_agent_sdk() and get_traces_sdk() instead (see above).

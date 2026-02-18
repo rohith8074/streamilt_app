@@ -401,3 +401,91 @@ class TestCreateTopicKb:
         assert re.match(r"^[a-z0-9_]+$", call_kwargs["name"]), (
             f"KB name '{call_kwargs['name']}' must match ^[a-z0-9_]+$"
         )
+
+
+class TestEvaluateSession:
+    """Tests for evaluate_session() — calls evaluator agent with conversation transcript."""
+
+    def test_returns_error_when_evaluator_not_configured(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", None)
+        result = evaluate_session([], "OOP (Object-Oriented Programming)", "Encapsulation")
+
+        assert "Error" in result
+        assert "EVALUATOR_AGENT_ID" in result
+
+    def test_formats_user_messages_as_student(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="Report")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        messages = [{"role": "user", "content": "What is encapsulation?"}]
+        evaluate_session(messages, "OOP (Object-Oriented Programming)", "Encapsulation")
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "Student: What is encapsulation?" in call_kwargs["message"]
+
+    def test_formats_assistant_messages_as_tutor(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="Report")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        messages = [{"role": "assistant", "content": "It is data hiding."}]
+        evaluate_session(messages, "OOP (Object-Oriented Programming)", "Encapsulation")
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "Tutor: It is data hiding." in call_kwargs["message"]
+
+    def test_includes_topic_context_in_prompt(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="Report")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        evaluate_session([], "OOP (Object-Oriented Programming)", "Inheritance")
+
+        call_kwargs = mock_agent.run.call_args.kwargs
+        assert "Inheritance" in call_kwargs["message"]
+
+    def test_returns_agent_response_string(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
+        mock_agent = MagicMock()
+        mock_agent.run.return_value = MagicMock(response="**Engagement: 4/5** - Good questions asked.")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.return_value = mock_agent
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        result = evaluate_session(
+            [{"role": "user", "content": "Hello"}],
+            "OOP (Object-Oriented Programming)",
+            "Encapsulation",
+        )
+        assert result == "**Engagement: 4/5** - Good questions asked."
+
+    def test_handles_sdk_error_gracefully(self, mocker):
+        from lyzr_client import evaluate_session
+
+        mocker.patch("lyzr_client.EVALUATOR_AGENT_ID", "eval-agent-123")
+        mock_client = MagicMock()
+        mock_client.studio.agents.get.side_effect = Exception("Connection timeout")
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        result = evaluate_session([], "OOP (Object-Oriented Programming)", "Encapsulation")
+        assert "failed" in result.lower() or "Error" in result
