@@ -330,3 +330,74 @@ class TestGetInstructionFile:
         # Verify function output uses the prefix
         result = get_instruction_file("OOP (Object-Oriented Programming)", "Encapsulation")
         assert result.startswith("learning_instructions/oop_")
+
+
+class TestCreateTopicKb:
+    """Tests for create_topic_kb() — creates a Lyzr KB from topic markdown content."""
+
+    def test_creates_kb_with_snake_case_name(self, mocker):
+        from lyzr_client import create_topic_kb
+
+        mock_kb = MagicMock()
+        mock_client = MagicMock()
+        mock_client.studio.create_knowledge_base.return_value = mock_kb
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        create_topic_kb("OOP (Object-Oriented Programming)", "Encapsulation", "content")
+
+        mock_client.studio.create_knowledge_base.assert_called_once()
+        call_kwargs = mock_client.studio.create_knowledge_base.call_args.kwargs
+        assert call_kwargs["name"] == "oop_encapsulation"
+
+    def test_adds_instruction_text_to_kb(self, mocker):
+        from lyzr_client import create_topic_kb
+
+        mock_kb = MagicMock()
+        mock_client = MagicMock()
+        mock_client.studio.create_knowledge_base.return_value = mock_kb
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        content = "# Encapsulation instructions — bundle data and behaviour."
+        create_topic_kb("OOP (Object-Oriented Programming)", "Encapsulation", content)
+
+        mock_kb.add_text.assert_called_once()
+        call_args_str = str(mock_kb.add_text.call_args)
+        assert "Encapsulation instructions" in call_args_str
+
+    def test_returns_kb_object(self, mocker):
+        from lyzr_client import create_topic_kb
+
+        mock_kb = MagicMock()
+        mock_kb.id = "kb-456"
+        mock_client = MagicMock()
+        mock_client.studio.create_knowledge_base.return_value = mock_kb
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        result = create_topic_kb("OOP (Object-Oriented Programming)", "Encapsulation", "content")
+        assert result is mock_kb
+
+    def test_returns_none_on_sdk_error(self, mocker):
+        from lyzr_client import create_topic_kb
+
+        mock_client = MagicMock()
+        mock_client.studio.create_knowledge_base.side_effect = Exception("API unavailable")
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        result = create_topic_kb("OOP (Object-Oriented Programming)", "Encapsulation", "content")
+        assert result is None
+
+    def test_knowledge_base_name_is_lowercase_alphanumeric_underscore(self, mocker):
+        """KB name must match ^[a-z0-9_]+$ (SDK requirement)."""
+        from lyzr_client import create_topic_kb
+        import re
+
+        mock_kb = MagicMock()
+        mock_client = MagicMock()
+        mock_client.studio.create_knowledge_base.return_value = mock_kb
+        mocker.patch("lyzr_client.LyzrClient", return_value=mock_client)
+
+        create_topic_kb("OOP (Object-Oriented Programming)", "Polymorphism", "content")
+        call_kwargs = mock_client.studio.create_knowledge_base.call_args.kwargs
+        assert re.match(r"^[a-z0-9_]+$", call_kwargs["name"]), (
+            f"KB name '{call_kwargs['name']}' must match ^[a-z0-9_]+$"
+        )

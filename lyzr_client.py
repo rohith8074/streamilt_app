@@ -38,6 +38,39 @@ _SUPER_TOPIC_PREFIX = {
 }
 
 
+def create_topic_kb(super_topic: str, sub_topic: str, instruction_content: str):
+    """Create a Lyzr knowledge base populated with topic instruction markdown.
+
+    The KB name is derived from the super_topic prefix and sub_topic:
+    e.g. "OOP (...)" + "Encapsulation" → "oop_encapsulation"
+
+    Args:
+        super_topic: e.g. "OOP (Object-Oriented Programming)"
+        sub_topic: e.g. "Encapsulation"
+        instruction_content: Full markdown text from the instruction file
+
+    Returns:
+        KnowledgeBase object on success, None on failure
+    """
+    prefix = _SUPER_TOPIC_PREFIX.get(super_topic, "oop")
+    kb_name = f"{prefix}_{sub_topic.lower()}"
+    try:
+        client = LyzrClient()
+        kb = client.studio.create_knowledge_base(
+            name=kb_name,
+            description=f"Socratic tutor instructions for {super_topic} > {sub_topic}",
+        )
+        kb.add_text(
+            text=instruction_content,
+            source=f"{kb_name}.md",
+        )
+        logger.info(f"Created KB '{kb_name}' (id={kb.id}) for {sub_topic}")
+        return kb
+    except Exception as e:
+        logger.error(f"Failed to create KB for {sub_topic}: {e}")
+        return None
+
+
 def get_instruction_file(super_topic: str, sub_topic: str) -> str:
     """Return the path to the markdown instruction file for a topic.
 
