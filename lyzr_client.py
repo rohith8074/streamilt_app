@@ -188,7 +188,7 @@ def chat_with_agent(
         # Initialize SDK client
         client = LyzrClient()
 
-        agent = client.studio.agents.get(agent_id)
+        agent = client.studio.agents.get(agent_id, response_model=TutorResponse)
 
         run_kwargs = {
             "message": message,
@@ -202,16 +202,17 @@ def chat_with_agent(
         if knowledge_bases:
             run_kwargs["knowledge_bases"] = knowledge_bases
 
-        raw = agent.run(**run_kwargs)
-        raw_text = raw.response if hasattr(raw, "response") else str(raw)
+        result = agent.run(**run_kwargs)
         logger.info("SDK chat successful for user %s, session %s", user_id, session_id)
 
-        try:
-            data = json.loads(raw_text)
-            return TutorResponse(**data)
-        except Exception:
-            logger.warning("Agent response was not valid JSON — falling back to plain text")
-            return raw_text
+        # SDK returns a validated TutorResponse when response_model is set,
+        # or raises InvalidResponseError on parse failure (caught below).
+        if isinstance(result, TutorResponse):
+            return result
+
+        # Fallback: agent returned AgentResponse (unexpected — log and return text)
+        logger.warning("Agent did not return structured TutorResponse — falling back to plain text")
+        return result.response if hasattr(result, "response") else str(result)
 
     except ValueError as ve:
         logger.error("Configuration error: %s", ve)
@@ -330,20 +331,19 @@ def evaluate_session(messages: list, super_topic: str, sub_topic: str) -> str:
 
     try:
         client = LyzrClient()
-        agent = client.studio.agents.get(EVALUATOR_AGENT_ID)
-        raw = agent.run(
+        agent = client.studio.agents.get(EVALUATOR_AGENT_ID, response_model=EvalReport)
+        result = agent.run(
             message=prompt,
             user_id="evaluator",
             session_id=str(uuid.uuid4()),
         )
-        raw_text = raw.response if hasattr(raw, "response") else str(raw)
 
-        try:
-            data = json.loads(raw_text)
-            return EvalReport(**data)
-        except Exception:
-            logger.warning("Evaluator response was not valid JSON — returning plain text")
-            return raw_text
+        # SDK returns a validated EvalReport when response_model is set.
+        if isinstance(result, EvalReport):
+            return result
+
+        logger.warning("Evaluator did not return structured EvalReport — returning plain text")
+        return result.response if hasattr(result, "response") else str(result)
     except Exception as e:
         logger.error("Session evaluation failed: %s", e)
         return f"Evaluation failed: {e}"
